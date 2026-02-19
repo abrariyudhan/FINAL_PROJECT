@@ -1,0 +1,10 @@
+[
+    {
+        "id": "1",
+        "fullName": "contoh_user",
+        "email": "contoh@mail.com",
+        "password": "contoh",
+        "avatar": "https://asset.tribunnews.com/ChI-WuyDbEdFg3OosdCQaGawAV8=/1200x675/filters:upscale():quality(30):format(webp):focal(0.5x0.5:0.5x0.5)/aceh/foto/bank/originals/Menteri-ESDM-Bahlil-Lahadalia-saat-ditemui-di-Istana-Jakarta-Jumat-732025.jpg",
+        "phoneNumber": 12345678
+    }
+]
