@@ -16,3 +16,4 @@ export async function getDb() {
   if (!db) return await connect()
   return db
 }
+

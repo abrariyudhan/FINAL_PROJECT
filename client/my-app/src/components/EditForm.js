@@ -158,13 +158,13 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
                   {newMembers.map((m) => (
                     <div key={m.id} className="grid grid-cols-1 md:grid-cols-10 gap-3 p-4 bg-white rounded-2xl border-2 border-dashed border-slate-100 items-center animate-in zoom-in-95">
                       <div className="md:col-span-3">
-                        <input name="memberName[]" placeholder="Name" className={inputStyles + " !p-2.5"} required />
+                        <input name="memberName[]" placeholder="Name" className={inputStyles + " p-2.5"} required />
                       </div>
                       <div className="md:col-span-3">
-                        <input name="memberEmail[]" placeholder="Email" className={inputStyles + " !p-2.5"} />
+                        <input name="memberEmail[]" placeholder="Email" className={inputStyles + " p-2.5"} />
                       </div>
                       <div className="md:col-span-3">
-                        <input name="memberPhone[]" placeholder="Phone" className={inputStyles + " !p-2.5"} />
+                        <input name="memberPhone[]" placeholder="Phone" className={inputStyles + " p-2.5"} />
                       </div>
                       <div className="md:col-span-1 flex justify-center">
                         <button type="button" onClick={() => removeNewMemberRow(m.id)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors">✕</button>

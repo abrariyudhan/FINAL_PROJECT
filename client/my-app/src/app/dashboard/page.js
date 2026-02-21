@@ -3,8 +3,11 @@ import { startOfDay } from "date-fns";
 import Link from "next/link";
 import SubCard from "@/components/SubCard";
 import SubTable from "@/components/SubTable";
+import { getCurrentUser } from "@/actions/auth";
+import LogoutButton from "@/components/LogoutButton";
 
 export default async function DashboardPage() {
+  const user = await getCurrentUser()
   const db = await getDb()
   const subscriptions = await db.collection("subscriptions")
     .find({})
@@ -59,9 +62,17 @@ export default async function DashboardPage() {
             </p>
           </div>
           
-          <Link href="/dashboard/add-subscription" className="hidden md:flex bg-slate-900 hover:bg-sky-500 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 items-center gap-3 active:scale-95">
-            <span className="text-lg leading-none">+</span> Add Subscription
-          </Link>
+          <div className="flex items-center gap-3">
+            {user && (
+              <span className="text-sm font-bold text-slate-500 hidden md:block">
+                Hi, {user.name}
+              </span>
+            )}
+            <Link href="/dashboard/add-subscription" className="hidden md:flex bg-slate-900 hover:bg-sky-500 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 items-center gap-3 active:scale-95">
+              <span className="text-lg leading-none">+</span> Add Subscription
+            </Link>
+            <LogoutButton />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
