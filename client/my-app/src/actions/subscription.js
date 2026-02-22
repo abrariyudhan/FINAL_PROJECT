@@ -6,12 +6,17 @@ import MasterData from "@/server/models/MasterData";
 import { errorHandler } from "@/server/helpers/errorHandler";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/actions/auth"
 
 export async function createFullSubscription(formData) {
   let isSuccess = false
   let newSubId = ""
 
   try {
+    const user = await getCurrentUser()
+    // Validasi jika user tidak ada
+    if (!user) return { error: "Unauthorized" }
+    
     const serviceName = formData.get("serviceName")
     const type = formData.get("type")
     const isReminderActive = formData.get("isReminderActive") === "on"
@@ -39,6 +44,7 @@ export async function createFullSubscription(formData) {
       billingCycle: billingCycle,
       type: type,
       isReminderActive: isReminderActive,
+      userId: user.userId,
     }
 
     const subResult = await Subscription.create(subData)
