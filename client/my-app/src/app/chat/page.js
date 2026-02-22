@@ -10,11 +10,17 @@ import {
   sendMessage,
   uploadFile,
   addReaction,
+  getGroups,
+  createGroup,
+  addGroupMember,
+  removeGroupMember,
+  deleteGroup,
 } from "@/actions/chat";
 
 export default function ChatPage() {
   // State management for chat application
   const [conversations, setConversations] = useState([]);
+  const [groups, setGroups] = useState([]); // Store all groups
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,9 +28,10 @@ export default function ChatPage() {
   // Current user ID (in real app, this would come from authentication)
   const currentUserId = "current-user-id";
 
-  // Fetch conversations on component mount
+  // Fetch conversations and groups on component mount
   useEffect(() => {
     loadConversations();
+    loadGroups();
   }, []);
 
   // Load all conversations from server
@@ -37,6 +44,16 @@ export default function ChatPage() {
       console.error("Error loading conversations:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Load all groups from server
+  const loadGroups = async () => {
+    try {
+      const data = await getGroups();
+      setGroups(data);
+    } catch (error) {
+      console.error("Error loading groups:", error);
     }
   };
 
@@ -104,6 +121,86 @@ export default function ChatPage() {
     }
   };
 
+  // ========== GROUP HANDLERS ==========
+
+  // Handle creating a new group chat
+  const handleCreateGroup = async (groupData) => {
+    try {
+      const result = await createGroup({
+        name: groupData.name,
+        description: groupData.description,
+        members: groupData.members || [currentUserId], // Include current user in group
+      });
+
+      if (result.success) {
+        // Reload groups and conversations to show the new group
+        await loadGroups();
+        await loadConversations();
+        return result;
+      }
+    } catch (error) {
+      console.error("Error creating group:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Handle adding a member to a group
+  const handleAddGroupMember = async (groupId, memberId) => {
+    try {
+      const result = await addGroupMember(groupId, memberId);
+      if (result.success) {
+        // Reload groups and conversations
+        await loadGroups();
+        await loadConversations();
+      }
+      return result;
+    } catch (error) {
+      console.error("Error adding group member:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Handle removing a member from a group
+  const handleRemoveGroupMember = async (groupId, memberId) => {
+    try {
+      const result = await removeGroupMember(groupId, memberId);
+      if (result.success) {
+        // Reload groups and conversations
+        await loadGroups();
+        await loadConversations();
+      }
+      return result;
+    } catch (error) {
+      console.error("Error removing group member:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Handle deleting a group
+  const handleDeleteGroup = async (groupId) => {
+    try {
+      const result = await deleteGroup(groupId);
+      if (result.success) {
+        // Clear active conversation if it was the deleted group
+        const deletedGroupConv = conversations.find(
+          (conv) => conv.groupId === groupId,
+        );
+        if (deletedGroupConv && activeConversationId === deletedGroupConv._id) {
+          setActiveConversationId(null);
+          setMessages([]);
+        }
+
+        // Reload groups and conversations
+        await loadGroups();
+        await loadConversations();
+      }
+      return result;
+    } catch (error) {
+      console.error("Error deleting group:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
   // Find the active conversation object
   const activeConversation = conversations.find(
     (conv) => conv._id === activeConversationId,
@@ -138,9 +235,14 @@ export default function ChatPage() {
         activeConversation={activeConversation}
         messages={messages}
         currentUserId={currentUserId}
+        groups={groups}
         onSendMessage={handleSendMessage}
         onUploadFile={handleUploadFile}
         onReaction={handleAddReaction}
+        onCreateGroup={handleCreateGroup}
+        onAddGroupMember={handleAddGroupMember}
+        onRemoveGroupMember={handleRemoveGroupMember}
+        onDeleteGroup={handleDeleteGroup}
       />
     </div>
   );

@@ -28,6 +28,8 @@ export default class Chat {
     const collection = await this.getCollection();
     const result = await collection.insertOne({
       participants: data.participants || [], // Array of participant member IDs
+      type: data.type || "direct", // 'direct' for 1-on-1, 'group' for group chats
+      groupId: data.groupId || null, // Reference to Group if type is 'group'
       messages: [], // Array of message objects
       lastMessage: null, // Last message info for preview
       unreadCount: 0, // Count of unread messages

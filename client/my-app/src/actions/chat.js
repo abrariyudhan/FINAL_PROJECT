@@ -1,6 +1,7 @@
 "use server";
 
 import Chat from "@/server/models/Chat";
+import Group from "@/server/models/Group";
 import { revalidatePath } from "next/cache";
 
 // Fetch all conversations sorted by most recent
@@ -110,6 +111,129 @@ export async function uploadFile(formData) {
     };
   } catch (error) {
     console.error("Error uploading file:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ========== GROUP FUNCTIONS ==========
+
+// Fetch all groups
+export async function getGroups() {
+  try {
+    const groups = await Group.getAll();
+    // Convert ObjectIds to strings for client-side rendering
+    return JSON.parse(JSON.stringify(groups));
+  } catch (error) {
+    console.error("Error fetching groups:", error);
+    throw error;
+  }
+}
+
+// Get a specific group by ID
+export async function getGroupById(groupId) {
+  try {
+    const group = await Group.getById(groupId);
+    if (!group) {
+      throw new Error("Group not found");
+    }
+    return JSON.parse(JSON.stringify(group));
+  } catch (error) {
+    console.error("Error fetching group:", error);
+    throw error;
+  }
+}
+
+// Create a new group chat
+export async function createGroup(groupData) {
+  try {
+    const result = await Group.create({
+      name: groupData.name,
+      description: groupData.description || "",
+      members: groupData.members || [], // Array of member IDs
+    });
+
+    // Also create a conversation for the group
+    if (result.insertedId) {
+      await Chat.create({
+        participants: groupData.members || [],
+        type: "group", // Mark as group conversation
+        groupId: result.insertedId.toString(),
+      });
+    }
+
+    revalidatePath("/chat");
+    return { success: true, groupId: result.insertedId.toString() };
+  } catch (error) {
+    console.error("Error creating group:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Add a member to an existing group
+export async function addGroupMember(groupId, memberId) {
+  try {
+    await Group.addMember(groupId, memberId);
+
+    // Also need to update the conversation's participants
+    // Find the conversation associated with this group
+    const conversations = await Chat.getAll();
+    const groupConv = conversations.find((conv) => conv.groupId === groupId);
+
+    if (groupConv) {
+      await Chat.update(groupConv._id.toString(), {
+        $addToSet: { participants: memberId },
+      });
+    }
+
+    revalidatePath("/chat");
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding group member:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Remove a member from a group
+export async function removeGroupMember(groupId, memberId) {
+  try {
+    await Group.removeMember(groupId, memberId);
+
+    // Also update the conversation's participants
+    const conversations = await Chat.getAll();
+    const groupConv = conversations.find((conv) => conv.groupId === groupId);
+
+    if (groupConv) {
+      await Chat.update(groupConv._id.toString(), {
+        $pull: { participants: memberId },
+      });
+    }
+
+    revalidatePath("/chat");
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing group member:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Delete a group and its associated conversation
+export async function deleteGroup(groupId) {
+  try {
+    // Find and delete the conversation associated with this group
+    const conversations = await Chat.getAll();
+    const groupConv = conversations.find((conv) => conv.groupId === groupId);
+
+    if (groupConv) {
+      await Chat.delete(groupConv._id.toString());
+    }
+
+    // Delete the group
+    await Group.delete(groupId);
+
+    revalidatePath("/chat");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting group:", error);
     return { success: false, error: error.message };
   }
 }
