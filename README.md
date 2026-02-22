@@ -19,4 +19,4 @@ git push origin task/"Nama kalian"
 ## UNTUK DI GITHUBNYA
 Buat Pull Request dari branch task/"Nama kalian" ke branch dev
 
-Minta review ke semuanya
+Minta review ke semuanya.
