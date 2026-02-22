@@ -9,7 +9,7 @@ import Link from "next/link"
 export default function RegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [fullname, setFullname] = useState("")
+  const [fullName, setFullName] = useState("")
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -19,7 +19,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
 
-    if (!fullname || !fullname.trim()) {
+    if (!fullName || !fullName.trim()) {
       setLoading(false)
       return Swal.fire({
         icon: "warning",
@@ -74,7 +74,7 @@ export default function RegisterPage() {
       })
     }
 
-    const result = await registerUser({ fullname, username, email, password, phoneNumber })
+    const result = await registerUser({ fullname: fullName, username, email, password, phoneNumber })
 
     if (result.error) {
       setLoading(false)
@@ -103,7 +103,7 @@ export default function RegisterPage() {
       
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black tracking-tight text-slate-900">
-            Create <span className="text-sky-500">Account.</span>
+            Create <span className="text-sky-500">Account</span>
           </h1>
           <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">
             Join us and manage your subscriptions
@@ -120,8 +120,8 @@ export default function RegisterPage() {
               <input
                 type="text"
                 name="fullname"
-                value={fullname}
-                onChange={(e) => setFullname(e.target.value)}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter your full name"
                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
               />
