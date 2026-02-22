@@ -4,13 +4,10 @@ import User from "@/server/models/User"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
-export async function registerUser(formData) {
+export async function registerUser({ fullname, username, email, password, phoneNumber }) {
   try {
-    const name = formData.get("name")
-    const email = formData.get("email")
-    const password = formData.get("password")
 
-    await User.register({ name, email, password })
+    await User.register({ fullname, username, email, password, phoneNumber })
 
     return { success: true, message: "Registration successful! Please login." }
   } catch (error) {

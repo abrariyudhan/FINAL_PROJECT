@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { registerUser } from "@/actions/auth"
 import Swal from "sweetalert2"
@@ -9,89 +9,31 @@ import Link from "next/link"
 export default function RegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    // Load Google Identity Services script
-    const script = document.createElement("script")
-    script.src = "https://accounts.google.com/gsi/client"
-    script.async = true
-    script.defer = true
-    document.body.appendChild(script)
-
-    script.onload = () => {
-      if (window.google) {
-        window.google.accounts.id.initialize({
-          client_id: process.env.NEXT_PUBLIC_CLIENT_ID,
-          callback: handleGoogleCallback,
-        })
-        window.google.accounts.id.renderButton(
-          document.getElementById("google-btn"),
-          {
-            theme: "outline",
-            size: "large",
-            width: "100%",
-            text: "signup_with",
-            shape: "pill",
-          }
-        )
-      }
-    }
-
-    return () => {
-      document.body.removeChild(script)
-    }
-  }, [])
-
-  async function handleGoogleCallback(response) {
-    try {
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: response.credential }),
-      })
-
-      const data = await res.json()
-
-      if (data.success) {
-        await Swal.fire({
-          icon: "success",
-          title: "Welcome!",
-          text: "Google sign-up successful!",
-          timer: 1500,
-          showConfirmButton: false,
-        })
-        router.push("/dashboard")
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Google Sign-Up Failed",
-          text: data.error || "Something went wrong",
-        })
-      }
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to connect to Google",
-      })
-    }
-  }
+  const [fullname, setFullname] = useState("")
+  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
 
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
 
-    const formData = new FormData(e.target)
-    const name = formData.get("name")
-    const email = formData.get("email")
-    const password = formData.get("password")
-
-    if (!name || !name.trim()) {
+    if (!fullname || !fullname.trim()) {
       setLoading(false)
       return Swal.fire({
         icon: "warning",
         title: "Validation Error",
-        text: "Name is required",
+        text: "Full name is required",
+      })
+    }
+
+    if (!username || !username.trim()) {
+      setLoading(false)
+      return Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Username is required",
       })
     }
 
@@ -123,7 +65,16 @@ export default function RegisterPage() {
       })
     }
 
-    const result = await registerUser(formData)
+    if (!phoneNumber || !phoneNumber.trim()) {
+      setLoading(false)
+      return Swal.fire({
+        icon: "warning",
+        title: "Validation Error",
+        text: "Phone number is required",
+      })
+    }
+
+    const result = await registerUser({ fullname, username, email, password, phoneNumber })
 
     if (result.error) {
       setLoading(false)
@@ -168,8 +119,24 @@ export default function RegisterPage() {
               </label>
               <input
                 type="text"
-                name="name"
+                name="fullname"
+                value={fullname}
+                onChange={(e) => setFullname(e.target.value)}
                 placeholder="Enter your full name"
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                name="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Choose a username"
                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
               />
             </div>
@@ -182,6 +149,8 @@ export default function RegisterPage() {
               <input
                 type="email"
                 name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
               />
@@ -195,7 +164,23 @@ export default function RegisterPage() {
               <input
                 type="password"
                 name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min. 5 characters"
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="08xxxxxxxxxx"
                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
               />
             </div>
@@ -209,21 +194,6 @@ export default function RegisterPage() {
               {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
-
-      
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-slate-100"></div>
-            <span className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
-              Or
-            </span>
-            <div className="flex-1 border-t border-slate-100"></div>
-          </div>
-
-      
-          <div className="flex justify-center">
-            <div id="google-btn"></div>
-          </div>
-
         
           <p className="text-center text-sm text-slate-400 mt-6">
             Already have an account?{" "}

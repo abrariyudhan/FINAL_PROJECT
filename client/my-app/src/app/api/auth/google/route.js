@@ -27,7 +27,7 @@ export async function POST(request) {
     const token = signToken({
       userId: user._id.toString(),
       email: user.email,
-      name: user.name,
+      fullname: user.fullname || user.name,
     })
 
     const cookieStore = await cookies()

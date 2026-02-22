@@ -7,18 +7,24 @@ export default class User {
         return db.collection("users")
     }
 
-    static async register({ name, email, password }) {
+    static async register({ fullname, username, email, password, phoneNumber }) {
         const collection = await this.getCollection()
 
         // Validasi tidak boleh kosong
-        if (!name || !name.trim()) {
-            throw new Error("Name is required")
+        if (!fullname || !fullname.trim()) {
+            throw new Error("Full name is required")
+        }
+        if (!username || !username.trim()) {
+            throw new Error("Username is required")
         }
         if (!email || !email.trim()) {
             throw new Error("Email is required")
         }
         if (!password || password.length < 5) {
             throw new Error("Password must be at least 5 characters")
+        }
+        if (!phoneNumber || !phoneNumber.trim()) {
+            throw new Error("Phone number is required")
         }
 
         // Validasi email format
@@ -27,24 +33,26 @@ export default class User {
             throw new Error("Invalid email format")
         }
 
-        // Cek unique name
-        const existingName = await collection.findOne({ name: name.trim() })
-        if (existingName) {
-            throw new Error("Name already taken")
+        // Cek unique username
+        const existingUsername = await collection.findOne({ username: username.trim().toLowerCase() })
+        if (existingUsername) {
+            throw new Error("Username already exists")
         }
 
         // Cek unique email
         const existingEmail = await collection.findOne({ email: email.trim().toLowerCase() })
         if (existingEmail) {
-            throw new Error("Email already registered")
+            throw new Error("Email already exists")
         }
 
         const hashedPassword = hashPassword(password)
 
         const result = await collection.insertOne({
-            name: name.trim(),
+            fullname: fullname.trim(),
+            username: username.trim().toLowerCase(),
             email: email.trim().toLowerCase(),
             password: hashedPassword,
+            phoneNumber: phoneNumber.trim(),
             createdAt: new Date(),
             updatedAt: new Date(),
         })
@@ -69,15 +77,26 @@ export default class User {
         let user = await collection.findOne({ email: email.trim().toLowerCase() })
 
         if (!user) {
+            // Generate username dari email (sebelum @)
+            let baseUsername = email.split("@")[0].toLowerCase()
+            let username = baseUsername
+            let counter = 1
+            while (await collection.findOne({ username })) {
+                username = `${baseUsername}${counter}`
+                counter++
+            }
+
             const result = await collection.insertOne({
-                name: name,
+                fullname: name,
+                username: username,
                 email: email.trim().toLowerCase(),
                 password: null,
+                phoneNumber: null,
                 avatar: avatar || null,
                 createdAt: new Date(),
                 updatedAt: new Date(),
             })
-            user = { _id: result.insertedId, name, email: email.trim().toLowerCase() }
+            user = { _id: result.insertedId, fullname: name, username, email: email.trim().toLowerCase() }
         }
 
         return user
