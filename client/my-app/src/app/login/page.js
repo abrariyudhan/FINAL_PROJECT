@@ -130,7 +130,7 @@ export default function LoginPage() {
       showConfirmButton: false,
     })
 
-    router.push("/")
+    router.push("/dashboard")
     setLoading(false)
   }
 
