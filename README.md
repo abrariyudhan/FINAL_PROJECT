@@ -10,7 +10,13 @@ DAN REPORT DI GRUP DISCORD
 
 
 ## JIKA SUDAH SELESAI
+git add . 
 
-git push origin -b task/"Nama kalian"
+git commit -m "Nama kalian - Deskripsi singkat perubahan yang dilakukan"
 
-git pull origin dev
+git push origin task/"Nama kalian"
+
+## UNTUK DI GITHUBNYA
+Buat Pull Request dari branch task/"Nama kalian" ke branch dev
+
+Minta review ke semuanya
