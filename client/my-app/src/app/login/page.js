@@ -140,7 +140,7 @@ export default function LoginPage() {
 
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black tracking-tight text-slate-900">
-            Welcome <span className="text-sky-500">Back.</span>
+            Login <span className="text-sky-500">Your Account</span>
           </h1>
           <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">
             Sign in to manage your subscriptions

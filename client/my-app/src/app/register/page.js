@@ -103,7 +103,7 @@ export default function RegisterPage() {
       
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black tracking-tight text-slate-900">
-            Create <span className="text-sky-500">Account.</span>
+            Create <span className="text-sky-500">Account</span>
           </h1>
           <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">
             Join us and manage your subscriptions
