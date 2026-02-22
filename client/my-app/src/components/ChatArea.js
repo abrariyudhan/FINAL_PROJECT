@@ -9,9 +9,14 @@ export default function ChatArea({
   activeConversation,
   messages,
   currentUserId,
+  groups, // All available groups
   onSendMessage,
   onUploadFile,
   onReaction,
+  onCreateGroup, // Handler for creating new groups
+  onAddGroupMember, // Handler for adding members to a group
+  onRemoveGroupMember, // Handler for removing members from a group
+  onDeleteGroup, // Handler for deleting a group
 }) {
   const messagesEndRef = useRef(null);
 
