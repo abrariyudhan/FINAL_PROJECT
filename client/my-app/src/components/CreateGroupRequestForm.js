@@ -76,7 +76,7 @@ export default function CreateGroupRequestForm({ subscriptions, masterServices }
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Dashboard</span>
             </Link>
             <h1 className="text-4xl font-black tracking-tight text-slate-900">
-              Open <span className="text-sky-500">Sharing.</span>
+              <span className="text-sky-500">Group</span> Open <span className="text-sky-500">Sharing.</span>
             </h1>
             <p className="text-sm text-slate-500 font-medium italic mt-1">
               Let others join your subscription and split the cost.
@@ -127,11 +127,10 @@ export default function CreateGroupRequestForm({ subscriptions, masterServices }
                         <div
                           key={sub._id}
                           onClick={() => handleSelectSub(sub)}
-                          className={`flex items-center gap-5 p-5 rounded-[1.5rem] border-2 cursor-pointer transition-all ${
-                            isSelected
+                          className={`flex items-center gap-5 p-5 rounded-[1.5rem] border-2 cursor-pointer transition-all ${isSelected
                               ? "border-sky-400 bg-sky-50/50 shadow-md shadow-sky-500/5"
                               : "border-slate-100 hover:border-sky-200 hover:bg-slate-50/50"
-                          }`}
+                            }`}
                         >
                           {/* Logo */}
                           <div className="w-12 h-12 bg-white rounded-[1.25rem] flex items-center justify-center border border-slate-100 shadow-sm flex-shrink-0">
@@ -154,9 +153,8 @@ export default function CreateGroupRequestForm({ subscriptions, masterServices }
 
                           {/* Check indicator */}
                           <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                              isSelected ? "border-sky-400 bg-sky-400" : "border-slate-200"
-                            }`}
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? "border-sky-400 bg-sky-400" : "border-slate-200"
+                              }`}
                           >
                             {isSelected && (
                               <span className="text-white text-xs font-black">✓</span>

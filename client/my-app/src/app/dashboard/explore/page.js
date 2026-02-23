@@ -8,8 +8,8 @@ export default async function ExplorePage() {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
 
-  // Ambil semua GroupRequest yang masih open
-  const groupRequests = await GroupRequest.getAllOpen()
+  // Ambil semua GroupRequest (semua status) supaya bisa dibedakan di UI
+  const groupRequests = await GroupRequest.getAll()
 
   // Ambil semua MemberRequest milik user ini supaya tahu mana yang sudah di-request
   const myRequests = await MemberRequest.getByUserId(user.userId)
