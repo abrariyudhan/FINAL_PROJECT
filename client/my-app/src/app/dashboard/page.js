@@ -65,9 +65,6 @@ export default async function DashboardPage() {
                 Hi, {user.fullname || user.username}
               </span>
             )}
-            {/* <Link href="/dashboard/explore" className="hidden md:flex bg-white hover:bg-sky-50 text-slate-900 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-slate-200 items-center gap-3 active:scale-95 border border-slate-100">
-              <span className="text-lg leading-none">🔍</span> Explore
-            </Link> */}
             <Link href="/dashboard/add-subscription" className="hidden md:flex bg-slate-900 hover:bg-sky-500 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 items-center gap-3 active:scale-95">
               <span className="text-lg leading-none">+</span> Add Subscription
             </Link>
@@ -89,7 +86,7 @@ export default async function DashboardPage() {
 
         <div className="mb-10 md:hidden space-y-3">
             <Link href="/dashboard/explore" className="bg-white text-slate-900 px-6 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-slate-200 flex items-center gap-3 w-full justify-center active:scale-95 transition-all border border-slate-100">
-                <span className="text-lg">🔍</span> Explore
+                <span className="text-lg">🔍</span> Explore Groups
             </Link>
             <Link href="/dashboard/add-subscription" className="bg-slate-900 text-white px-6 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-slate-300 flex items-center gap-3 w-full justify-center active:scale-95 transition-all">
                 <span className="text-lg">+</span> Add Subscription
@@ -104,7 +101,7 @@ export default async function DashboardPage() {
               <span className="text-lg leading-none">🔍</span> Explore Groups
             </Link>
           </div>
-
+ 
           <div className="hidden md:block">
             <SubTable subscriptions={subscriptions} today={today} />
           </div>

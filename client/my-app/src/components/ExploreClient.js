@@ -276,12 +276,13 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
                     />
                   ))}
                 </div>
+                
               </div>
             )}
-
           </div>
         )}
       </div>
+      
     </div>
   )
 }
