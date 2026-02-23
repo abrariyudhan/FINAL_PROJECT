@@ -90,6 +90,7 @@ export default function ChatPage() {
           if (conversationId === activeConversationRef.current) {
             setMessages((prev) => [...prev, message]);
           }
+
           // Reload conversations untuk update last message preview
           loadConversations();
         });
@@ -109,6 +110,12 @@ export default function ChatPage() {
         socket.on("userStoppedTyping", ({ conversationId, userId }) => {
           // TODO: Hide typing indicator UI
           console.log(`User ${userId} stopped typing in ${conversationId}`);
+        });
+
+        // Listen for message errors from server
+        socket.on("messageError", ({ error }) => {
+          console.error("❌ Message error from server:", error);
+          alert(`Failed to send message: ${error}`);
         });
       }
 
@@ -205,6 +212,9 @@ export default function ChatPage() {
 
   // Load messages when a conversation is selected
   useEffect(() => {
+    // Update ref to avoid stale closure in socket listener
+    activeConversationRef.current = activeConversationId;
+
     if (activeConversationId) {
       loadMessages(activeConversationId);
 

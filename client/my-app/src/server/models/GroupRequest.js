@@ -14,23 +14,32 @@ export default class GroupRequest {
     return await collection.find({ status: "open" }).toArray();
   }
 
+  // Ambil semua GroupRequest (semua status: open, full, closed) — untuk explore
+  static async getAll() {
+    const collection = await this.getCollection();
+    return await collection
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+  }
+
   // Ambil semua GroupRequest milik owner tertentu
   static async getByOwnerId(ownerId) {
-  const collection = await this.getCollection();
-  return await collection
-    .find({ ownerId: new ObjectId(ownerId) })
-    .sort({ createdAt: -1 })
-    .toArray();
-}
+    const collection = await this.getCollection();
+    return await collection
+      .find({ ownerId: new ObjectId(ownerId) })
+      .sort({ createdAt: -1 })
+      .toArray();
+  }
 
   // Ambil satu GroupRequest by ID
   static async getById(id) {
-  if (!id || id.length !== 24) throw new Error("Invalid GroupRequest ID");
-  const collection = await this.getCollection();
-  const result = await collection.findOne({ _id: new ObjectId(id) });
-  if (!result) throw new NotFound("GroupRequest not found");
-  return result;
-}
+    if (!id || id.length !== 24) throw new Error("Invalid GroupRequest ID");
+    const collection = await this.getCollection();
+    const result = await collection.findOne({ _id: new ObjectId(id) });
+    if (!result) throw new NotFound("GroupRequest not found");
+    return result;
+  }
 
   // Buat GroupRequest baru
   static async create(data) {

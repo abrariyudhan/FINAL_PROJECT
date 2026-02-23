@@ -7,6 +7,7 @@ import { errorHandler } from "@/server/helpers/errorHandler";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/actions/auth"
+import { inngest } from "@/server/lib/inngest/client";
 
 export async function createFullSubscription(formData) {
   let isSuccess = false
@@ -16,7 +17,7 @@ export async function createFullSubscription(formData) {
     const user = await getCurrentUser()
     // Validasi jika user tidak ada
     if (!user) return { error: "Unauthorized" }
-    
+
     const serviceName = formData.get("serviceName")
     const type = formData.get("type")
     const isReminderActive = formData.get("isReminderActive") === "on"
@@ -76,6 +77,16 @@ export async function createFullSubscription(formData) {
       }
     }
 
+    if (subData.isReminderActive) {
+      await inngest.send({
+        name: "app/subscription.reminder",
+        data: {
+          subId: subResult.insertedId.toString(),
+          reminderDate: subData.reminderDate,
+        },
+      })
+    }
+
     revalidatePath("/dashboard")
     isSuccess = true
   } catch (error) {
@@ -95,6 +106,9 @@ export async function updateFullSubscription(formData) {
     const user = await getCurrentUser()
     if (!user.userId) throw new Error("Unauthorized")
 
+    const existingSub = await Subscription.getByUserAndId(user.userId, id)
+    if (!existingSub) throw new Error("Subscription not found or access denied")
+
     const serviceName = formData.get("serviceName")
     const isReminderActive = formData.get("isReminderActive") === "on"
     const billingDate = formData.get("billingDate")
@@ -109,7 +123,7 @@ export async function updateFullSubscription(formData) {
     if (new Date(reminderDate) > new Date(billingDate)) {
       throw new Error("The reminder date must not be later than the billing date.")
     }
-    
+
     const updatedData = {
       serviceName: serviceName,
       logo: logoUrl,
@@ -119,7 +133,8 @@ export async function updateFullSubscription(formData) {
       pricePaid: Number(formData.get("pricePaid")),
       reminderDate: reminderDate,
       isReminderActive: isReminderActive,
-      type: formData.get("type"), 
+      type: formData.get("type"),
+      userId: user.userId,
     }
 
     // Update data utama subscription
@@ -149,6 +164,49 @@ export async function updateFullSubscription(formData) {
       }
     }
 
+    // HANDLE INNGEST EVENTS - Setelah semua update berhasil
+    try {
+      // Jika user matikan reminder DAN sebelumnya aktif
+      if (!isReminderActive && existingSub.isReminderActive) {
+        await inngest.send({
+          name: "app/subscription.reminder.cancel",
+          data: { subId: id }
+        })
+      } 
+      // Jika user nyalakan reminder DAN sebelumnya mati
+      else if (isReminderActive && !existingSub.isReminderActive) {
+        await inngest.send({
+          name: "app/subscription.reminder",
+          data: {
+            subId: id,
+            reminderDate: reminderDate,
+          },
+        })
+      }
+      // Jika reminder tetap aktif tapi tanggal berubah
+      else if (isReminderActive && existingSub.reminderDate !== reminderDate) {
+        // Cancel dulu, baru schedule ulang
+        await inngest.send({
+          name: "app/subscription.reminder.cancel",
+          data: { subId: id }
+        })
+        
+        // Kasih delay kecil
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        await inngest.send({
+          name: "app/subscription.reminder",
+          data: {
+            subId: id,
+            reminderDate: reminderDate,
+          },
+        })
+      }
+      } catch (inngestError) {
+      // Log error tapi jangan fail keseluruhan update
+      console.error("Inngest event error (non-critical):", inngestError)
+    }
+
     revalidatePath(`/dashboard/${id}`)
     revalidatePath("/dashboard")
     isSuccess = true
@@ -165,16 +223,16 @@ export async function deleteSubscription(id) {
   try {
     const user = await getCurrentUser()
     if (!user.userId) throw new Error("Unauthorized")
-      
+
     // Pastikan user memiliki akses ke subscription ini
     const sub = await Subscription.getByUserAndId(user.userId, id)
     if (!sub) throw new Error("Subscription not found or access denied")
 
     // Bersihkan semua member terkait
     await Member.deleteBySubscriptionId(id, user.userId)
-    
+
     // Hapus data utama
-    await Subscription.delete(id,user.userId)
+    await Subscription.delete(id, user.userId)
 
     revalidatePath("/dashboard")
   } catch (error) {
