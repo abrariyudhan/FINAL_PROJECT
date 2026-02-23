@@ -28,8 +28,12 @@ export function initChatSocket(server) {
     socket.on("sendMessage", async (data) => {
       const { conversationId, senderId, content, type, fileUrl, fileName } =
         data;
+      
+      console.log(`📥 Received message from ${senderId} in ${conversationId}`);
+      
       try {
         // Save message ke database
+        console.log("💾 Saving message to database...");
         await Chat.addMessage(conversationId, {
           senderId,
           content,
@@ -37,19 +41,25 @@ export function initChatSocket(server) {
           fileUrl: fileUrl || null,
           fileName: fileName || null,
         });
+        console.log("✅ Message saved successfully");
 
         // Get updated conversation dengan message baru
         const updatedConversation = await Chat.getById(conversationId);
         const newMessage =
           updatedConversation.messages[updatedConversation.messages.length - 1];
 
+        console.log(`📤 Broadcasting message to room ${conversationId}`);
+        
         // Broadcast message ke semua user di room
         io.to(conversationId).emit("receiveMessage", {
           conversationId,
           message: newMessage,
         });
+        
+        console.log("✅ Message broadcast complete");
       } catch (error) {
-        console.error("Error sending message:", error.message);
+        console.error("❌ Error sending message:", error.message);
+        console.error("Stack:", error.stack);
         socket.emit("messageError", { error: error.message });
       }
     });
