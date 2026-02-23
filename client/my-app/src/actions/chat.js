@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 // Fetch all conversations sorted by most recent
 export async function getConversations() {
   try {
-    const conversations = await Chat.getAll();
+    const conversations = await Chat.getAllWithParticipants(); // Get conversations with user details
     // Convert ObjectIds to strings for client-side rendering
     return JSON.parse(JSON.stringify(conversations));
   } catch (error) {
@@ -116,6 +116,7 @@ export async function uploadFile(formData) {
 }
 
 // ========== GROUP FUNCTIONS ==========
+// Fungsi-fungsi untuk manage groups dan sync dengan chat
 
 // Fetch all groups
 export async function getGroups() {
@@ -143,7 +144,7 @@ export async function getGroupById(groupId) {
   }
 }
 
-// Create a new group chat
+// Create a new group chat (manual create, bukan dari GroupRequest)
 export async function createGroup(groupData) {
   try {
     const result = await Group.create({
@@ -152,7 +153,7 @@ export async function createGroup(groupData) {
       members: groupData.members || [], // Array of member IDs
     });
 
-    // Also create a conversation for the group
+    // Create Chat conversation untuk group
     if (result.insertedId) {
       await Chat.create({
         participants: groupData.members || [],
@@ -169,13 +170,12 @@ export async function createGroup(groupData) {
   }
 }
 
-// Add a member to an existing group
+// Add a member to an existing group (update Group dan Chat)
 export async function addGroupMember(groupId, memberId) {
   try {
     await Group.addMember(groupId, memberId);
 
-    // Also need to update the conversation's participants
-    // Find the conversation associated with this group
+    // Update conversation participants juga
     const conversations = await Chat.getAll();
     const groupConv = conversations.find((conv) => conv.groupId === groupId);
 
@@ -193,12 +193,12 @@ export async function addGroupMember(groupId, memberId) {
   }
 }
 
-// Remove a member from a group
+// Remove a member from a group (update Group dan Chat)
 export async function removeGroupMember(groupId, memberId) {
   try {
     await Group.removeMember(groupId, memberId);
 
-    // Also update the conversation's participants
+    // Update conversation participants juga
     const conversations = await Chat.getAll();
     const groupConv = conversations.find((conv) => conv.groupId === groupId);
 
@@ -216,10 +216,10 @@ export async function removeGroupMember(groupId, memberId) {
   }
 }
 
-// Delete a group and its associated conversation
+// Delete a group and its associated conversation (hapus keduanya)
 export async function deleteGroup(groupId) {
   try {
-    // Find and delete the conversation associated with this group
+    // Find and delete conversation dulu
     const conversations = await Chat.getAll();
     const groupConv = conversations.find((conv) => conv.groupId === groupId);
 

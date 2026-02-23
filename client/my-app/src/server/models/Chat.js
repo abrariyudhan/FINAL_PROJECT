@@ -16,6 +16,63 @@ export default class Chat {
       .toArray();
   }
 
+  // Get all conversations with populated participant details (names, avatars)
+  static async getAllWithParticipants() {
+    const collection = await this.getCollection();
+    return await collection
+      .aggregate([
+        {
+          $addFields: {
+            // Convert participant strings to ObjectIds for lookup
+            participantIds: {
+              $map: {
+                input: "$participants",
+                as: "participantId",
+                in: { $toObjectId: "$$participantId" },
+              },
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "participantIds",
+            foreignField: "_id",
+            as: "participantDetails",
+          },
+        },
+        {
+          $project: {
+            participants: 1,
+            type: 1,
+            groupId: 1,
+            messages: 1,
+            lastMessage: 1,
+            unreadCount: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            // Only return necessary user fields: fullname, username, avatar
+            participantDetails: {
+              $map: {
+                input: "$participantDetails",
+                as: "user",
+                in: {
+                  _id: "$$user._id",
+                  fullname: "$$user.fullname",
+                  username: "$$user.username",
+                  avatar: "$$user.avatar",
+                },
+              },
+            },
+          },
+        },
+        {
+          $sort: { "lastMessage.timestamp": -1 }, // Sort by most recent message
+        },
+      ])
+      .toArray();
+  }
+
   // Get a specific conversation by ID
   static async getById(id) {
     if (!id || id.length !== 24) throw new Error("Invalid Chat ID format");

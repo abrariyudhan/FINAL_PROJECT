@@ -4,9 +4,15 @@ import { formatDistanceToNow } from "date-fns";
 
 // Component to display a single conversation in the message list
 export default function ConversationItem({ conversation, isActive, onClick }) {
-  // Extract conversation data
-  const { userName, userAvatar, lastMessage, timestamp, status, unreadCount } =
-    conversation;
+  // Extract conversation data dari backend
+  const {
+    userName,
+    userAvatar,
+    lastMessage, // Object dengan {content, timestamp} dari backend
+    status,
+    unreadCount,
+    type, // 'direct' atau 'group'
+  } = conversation;
 
   // Format timestamp to relative time (e.g., "5 mins ago")
   const formatTime = (date) => {
@@ -35,6 +41,10 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
       : text;
   };
 
+  // Get message content dari lastMessage object
+  const messageContent = lastMessage?.content || "";
+  const messageTime = lastMessage?.timestamp;
+
   return (
     <div
       onClick={onClick}
@@ -61,9 +71,22 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
           )}
         </div>
 
-        {/* Online Status Indicator */}
-        {status === "online" && (
+        {/* Online Status Indicator (hide untuk group chats) */}
+        {status === "online" && type !== "group" && (
           <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white"></div>
+        )}
+
+        {/* Group indicator badge */}
+        {type === "group" && (
+          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
+            <svg
+              className="w-2 h-2 text-white"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+            </svg>
+          </div>
         )}
       </div>
 
@@ -74,12 +97,12 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
             {userName || "Unknown User"}
           </h3>
           <span className="text-[10px] text-slate-400 flex-shrink-0">
-            {formatTime(timestamp)}
+            {formatTime(messageTime)}
           </span>
         </div>
 
         <p className="text-xs text-slate-500 truncate">
-          {truncateMessage(lastMessage)}
+          {truncateMessage(messageContent)}
         </p>
       </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 import Sidebar from "@/components/Sidebar";
 import MessageList from "@/components/MessageList";
 import ChatArea from "@/components/ChatArea";
@@ -15,7 +16,9 @@ import {
   addGroupMember,
   removeGroupMember,
   deleteGroup,
+  markConversationAsRead,
 } from "@/actions/chat";
+import { getCurrentUser } from "@/actions/auth";
 
 export default function ChatPage() {
   // State management for chat application
@@ -24,22 +27,106 @@ export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const socketRef = useRef(null);
 
-  // Current user ID (in real app, this would come from authentication)
-  const currentUserId = "current-user-id";
-
-  // Fetch conversations and groups on component mount
+  // Initialize user and Socket.IO connection
   useEffect(() => {
-    loadConversations();
-    loadGroups();
+    initializeChat();
+
+    return () => {
+      // Cleanup: disconnect socket saat component unmount
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
   }, []);
+
+  // Initialize chat: get user, connect socket, load data
+  const initializeChat = async () => {
+    try {
+      // Get current user dari auth
+      const user = await getCurrentUser();
+      if (user) {
+        setCurrentUser(user);
+
+        // Setup Socket.IO connection untuk real-time messaging
+        const socket = io(
+          process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001",
+          {
+            withCredentials: true,
+          },
+        );
+
+        socketRef.current = socket;
+
+        // Listen for incoming messages dari socket
+        socket.on("receiveMessage", ({ conversationId, message }) => {
+          // Update messages jika sedang di conversation yang sama
+          if (conversationId === activeConversationId) {
+            setMessages((prev) => [...prev, message]);
+          }
+          // Reload conversations untuk update last message preview
+          loadConversations();
+        });
+
+        // Listen for typing indicators
+        socket.on("userTyping", ({ conversationId, userId }) => {
+          // TODO: Show typing indicator UI
+          console.log(`User ${userId} is typing in ${conversationId}`);
+        });
+
+        socket.on("userStoppedTyping", ({ conversationId, userId }) => {
+          // TODO: Hide typing indicator UI
+          console.log(`User ${userId} stopped typing in ${conversationId}`);
+        });
+      }
+
+      // Load conversations dan groups
+      await loadConversations();
+      await loadGroups();
+    } catch (error) {
+      console.error("Error initializing chat:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Load all conversations from server
   const loadConversations = async () => {
     try {
       setIsLoading(true);
       const data = await getConversations();
-      setConversations(data);
+
+      // Map conversations dengan participant details dari backend
+      const mappedConversations = data.map((conv) => {
+        // Untuk direct chats, ambil participant yg bukan current user
+        if (conv.type === "direct") {
+          const otherParticipant = conv.participantDetails?.find(
+            (p) => p._id !== currentUser?.userId,
+          );
+          return {
+            ...conv,
+            userName:
+              otherParticipant?.fullname ||
+              otherParticipant?.username ||
+              "Unknown User",
+            userAvatar: otherParticipant?.avatar || null,
+          };
+        } else {
+          // Untuk group chats, show semua participant names atau group name
+          const participantNames = conv.participantDetails
+            ?.map((p) => p.fullname || p.username)
+            .join(", ");
+          return {
+            ...conv,
+            userName: participantNames || "Group Chat",
+            userAvatar: null, // Groups biasanya punya avatar terpisah
+          };
+        }
+      });
+
+      setConversations(mappedConversations);
     } catch (error) {
       console.error("Error loading conversations:", error);
     } finally {
@@ -61,7 +148,22 @@ export default function ChatPage() {
   useEffect(() => {
     if (activeConversationId) {
       loadMessages(activeConversationId);
+
+      // Join conversation room via socket untuk receive real-time messages
+      if (socketRef.current) {
+        socketRef.current.emit("joinRoom", activeConversationId);
+      }
+
+      // Mark conversation as read
+      markConversationAsRead(activeConversationId);
     }
+
+    // Cleanup: leave room saat pindah conversation
+    return () => {
+      if (activeConversationId && socketRef.current) {
+        socketRef.current.emit("leaveRoom", activeConversationId);
+      }
+    };
   }, [activeConversationId]);
 
   // Fetch messages for the active conversation
@@ -82,14 +184,31 @@ export default function ChatPage() {
 
   // Handle sending a new message
   const handleSendMessage = async (messageData) => {
-    if (!activeConversationId) return;
+    if (!activeConversationId || !currentUser) return;
 
     try {
-      const result = await sendMessage(activeConversationId, messageData);
+      // Kirim via Socket.IO untuk real-time delivery
+      if (socketRef.current) {
+        socketRef.current.emit("sendMessage", {
+          conversationId: activeConversationId,
+          senderId: currentUser.userId,
+          content: messageData.content,
+          type: messageData.type || "text",
+          fileUrl: messageData.fileUrl || null,
+          fileName: messageData.fileName || null,
+        });
+      }
+
+      // Fallback: kirim via server action jika socket belum ready
+      const result = await sendMessage(activeConversationId, {
+        ...messageData,
+        senderId: currentUser.userId,
+      });
+
       if (result.success) {
-        // Reload messages to show the new message
+        // Reload messages untuk show new message (jika socket gagal)
         await loadMessages(activeConversationId);
-        // Reload conversations to update last message preview
+        // Reload conversations untuk update last message preview
         await loadConversations();
       }
     } catch (error) {
@@ -125,11 +244,13 @@ export default function ChatPage() {
 
   // Handle creating a new group chat
   const handleCreateGroup = async (groupData) => {
+    if (!currentUser) return;
+
     try {
       const result = await createGroup({
         name: groupData.name,
         description: groupData.description,
-        members: groupData.members || [currentUserId], // Include current user in group
+        members: groupData.members || [currentUser.userId], // Include current user in group
       });
 
       if (result.success) {
@@ -234,7 +355,7 @@ export default function ChatPage() {
       <ChatArea
         activeConversation={activeConversation}
         messages={messages}
-        currentUserId={currentUserId}
+        currentUserId={currentUser?.userId}
         groups={groups}
         onSendMessage={handleSendMessage}
         onUploadFile={handleUploadFile}

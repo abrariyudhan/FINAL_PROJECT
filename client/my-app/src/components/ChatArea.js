@@ -62,7 +62,7 @@ export default function ChatArea({
       {/* Chat Header */}
       <div className="border-b border-slate-100 p-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {/* User Avatar */}
+          {/* User/Group Avatar */}
           <div className="relative">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-200">
               {activeConversation.userAvatar ? (
@@ -77,21 +77,28 @@ export default function ChatArea({
                 </div>
               )}
             </div>
-            {/* Online Status */}
-            {activeConversation.status === "online" && (
-              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white"></div>
-            )}
+            {/* Online Status (hide untuk group) */}
+            {activeConversation.status === "online" &&
+              activeConversation.type !== "group" && (
+                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white"></div>
+              )}
           </div>
 
-          {/* User Info */}
+          {/* User/Group Info */}
           <div>
             <h2 className="text-lg font-black text-slate-900">
               {activeConversation.userName || "Unknown User"}
             </h2>
-            <p className="text-xs text-emerald-500 font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-              {activeConversation.status === "online" ? "Online" : "Offline"}
-            </p>
+            {activeConversation.type === "group" ? (
+              <p className="text-xs text-slate-500 font-bold">
+                {activeConversation.participants?.length || 0} members
+              </p>
+            ) : (
+              <p className="text-xs text-emerald-500 font-bold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                {activeConversation.status === "online" ? "Online" : "Offline"}
+              </p>
+            )}
           </div>
         </div>
 
@@ -154,11 +161,8 @@ export default function ChatArea({
 
       {/* Message Input */}
       <MessageInput
-        onSendMessage={(messageData) =>
-          onSendMessage({
-            ...messageData,
-            senderId: currentUserId,
-          })
+        onSendMessage={
+          (messageData) => onSendMessage(messageData) // sudah ada senderId dari parent
         }
         onUploadFile={onUploadFile}
       />
