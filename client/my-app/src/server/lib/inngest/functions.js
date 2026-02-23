@@ -4,10 +4,25 @@ import Subscription from "@/server/models/Subscription";
 import User from "@/server/models/User";
 import Member from "@/server/models/Member";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+// Helper untuk kirim Telegram
+async function sendTelegram(chatId, text) {
+  if (!chatId) return
+  const url = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+    })
+  } catch (err) {
+    console.error("Telegram send error:", err)
+  }
+}
 
 export const sendSubscriptionReminder = inngest.createFunction(
-  { 
+  {
     id: "send-reminder-email",
     cancelOn: [
       {
@@ -20,94 +35,157 @@ export const sendSubscriptionReminder = inngest.createFunction(
   async ({ event, step }) => {
     const { subId, reminderDate } = event.data
 
+    // 1. Tunggu sampai hari H
     await step.sleepUntil("wait-for-reminder-date", reminderDate)
 
+    // 2. Ambil data langganan
     const sub = await step.run("fetch-subscription", async () => {
       return await Subscription.getById(subId)
     })
 
     if (!sub || !sub.isReminderActive) return { message: "Reminder dibatalkan oleh user" }
 
-    const emailResult = await step.run("send-email-via-resend", async () => {
+    // 3. Kirim Email Personalisasi (Looping)
+    const emailResults = await step.run("send-email-via-resend", async () => {
       const user = await User.getUserById(sub.userId)
       const members = await Member.getBySubscriptionId(subId)
-      
-      const memberEmails = members.filter(m => m.email).map(m => m.email)
-      const recipients = [user.email, ...memberEmails]
-
       const isFamily = sub.type === "Family"
-      
-      const membersListHtml = isFamily && members.length > 0
-        ? `
-          <div style="margin-top: 15px; border-top: 1px dashed #e2e8f0; pt-15px;">
-            <p style="margin: 10px 0 5px 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Anggota Keluarga:</p>
-            <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px;">
-              ${members.map(m => `<li>${m.name} ${m.email ? `<span style="color: #94a3b8; font-size: 12px;">(${m.email})</span>` : ''}</li>`).join('')}
-            </ul>
-          </div>
-        `
-        : ""
 
-      const htmlContent = `
-        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <span style="background: ${isFamily ? '#8b5cf6' : '#0ea5e9'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase;">
-              ${isFamily ? 'Family Plan' : 'Individual Plan'}
-            </span>
-          </div>
+      // Logika Biaya
+      const totalPeople = 1 + (members?.length || 0)
+      const pricePerPerson = Math.round(sub.pricePaid / totalPeople)
 
-          <h2 style="color: #1e293b; text-align: center;">Halo, ${user.fullname || user.username}!</h2>
-          <p style="text-align: center; color: #64748b;">Waktunya bersiap! Tagihan layanan Anda akan segera jatuh tempo.</p>
-          
-          <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid #f1f5f9;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="color: #94a3b8; font-size: 13px; padding-bottom: 5px;">Layanan</td>
-                <td style="text-align: right; font-weight: bold; color: #1e293b;">${sub.serviceName}</td>
-              </tr>
-              <tr>
-                <td style="color: #94a3b8; font-size: 13px; padding-bottom: 5px;">Total Tagihan</td>
-                <td style="text-align: right; font-weight: bold; color: #0ea5e9; font-size: 18px;">Rp ${sub.pricePaid.toLocaleString('id-ID')}</td>
-              </tr>
-              <tr>
-                <td style="color: #94a3b8; font-size: 13px;">Tanggal Billing</td>
-                <td style="text-align: right; font-weight: bold; color: #1e293b;">${sub.billingDate}</td>
-              </tr>
-            </table>
+      // Gabungkan Owner + Member ke dalam satu list penerima dengan ID mereka
+      const allRecipients = [
+        { 
+          id: user._id, 
+          name: user.fullname || user.username, 
+          email: user.email, 
+          isOwner: true, 
+          telegramChatId: user.telegramChatId 
+        },
+        ...members.map(m => ({ 
+          id: m._id, 
+          name: m.name, 
+          email: m.email, 
+          isOwner: false, 
+          telegramChatId: m.telegramChatId 
+        }))
+      ]
 
-            ${membersListHtml}
-          </div>
+      // Kirim email satu per satu agar sapaan "Halo" sesuai nama masing-masing
+      const sendPromises = allRecipients.map(async (recipient) => {
 
-          <p style="font-size: 14px; color: #475569; line-height: 1.6;">
-            ${isFamily 
-              ? "Pastikan Anda sudah mengumpulkan iuran dari anggota keluarga lainnya agar pembayaran tetap lancar tepat waktu."
-              : "Pastikan saldo atau metode pembayaran Anda memiliki dana yang cukup untuk menghindari pemutusan layanan."
-            }
-          </p>
+        // --- KIRIM KE TELEGRAM JIKA CHAT ID ADA ---
+        if (recipient.telegramChatId) {
+          const teleText = `🔔 <b>Halo ${recipient.name}!</b>\nTagihan <b>${sub.serviceName}</b> sebesar <b>Rp ${sub.pricePaid.toLocaleString('id-ID')}</b> akan segera jatuh tempo.\n\n${recipient.isOwner ? 'Jangan lupa kumpulkan iuran!' : 'Siapkan iuran Anda!'}`
+          await sendTelegram(recipient.telegramChatId, teleText)
+        }
 
-          <div style="text-align: center; margin-top: 30px;">
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background: #1e293b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">Buka Dashboard</a>
-          </div>
+        // --- TEMPLATE EMAIL ---        
+        // Tombol Telegram (Hanya muncul jika telegramChatId kosong)
+        const telegramBtn = !recipient.telegramChatId 
+          ? `<div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 12px; border: 1px dashed #0ea5e9; text-align: center;">
+               <p style="font-size: 12px; color: #64748b; margin: 0 0 10px 0;">Ingin terima pengingat via Telegram?</p>
+               <a href="https://t.me/SubTrack8_bot?start=${recipient.id}" style="background: #0088cc; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 12px; display: inline-block;">Aktifkan Telegram</a>
+             </div>` 
+          : ""
 
-          <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 30px 0;" />
-          <p style="text-align: center; color: #94a3b8; font-size: 11px;">
-            Ini adalah pesan otomatis dari <strong>SubScribe App</strong>. Anda menerima ini karena mengaktifkan reminder untuk layanan ${sub.serviceName}.
-          </p>
-        </div>
-      `
+        // Template List Anggota
+        const membersListHtml = isFamily && members.length > 0
+          ? `
+          <div style="margin-top: 15px; border-top: 1px dashed #e2e8f0; padding-top: 15px;">
+            <p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Anggota & Estimasi Iuran:</p>
+            <div style="background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;">
+              ${members.map(m => `
+                <div style="padding: 10px; border-bottom: 1px solid #f1f5f9;">
+                  <table style="width: 100%;">
+                    <tr>
+                      <td style="font-size: 14px; color: #1e293b; text-align: left;">${m.name}</td>
+                      <td style="font-size: 13px; color: #0ea5e9; font-weight: bold; text-align: right;">Rp ${pricePerPerson.toLocaleString('id-ID')}</td>
+                    </tr>
+                  </table>
+                </div>
+              `).join('')}
+              <div style="padding: 10px; background: #fdf2f8; border-radius: 0 0 8px 8px;">
+                <table style="width: 100%;">
+                  <tr>
+                    <td style="font-size: 14px; color: #1e293b; font-weight: bold; text-align: left;">${user.fullname || user.username} (Owner)</td>
+                    <td style="font-size: 13px; color: #db2777; font-weight: bold; text-align: right;">Rp ${pricePerPerson.toLocaleString('id-ID')}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>`
+          : ""
 
-      return await resend.emails.send({
-        from: 'SubScribe <notifications@muhammaddheovani.web.id>',
-        to: recipients,
-        subject: `${isFamily ? '[Family]' : '[Personal]'} Tagihan ${sub.serviceName} segera tiba!`,
-        html: htmlContent
+        const htmlContent = `
+          <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 24px; color: #1e293b;">
+            
+            <div style="text-align: center; margin-bottom: 24px;">
+              <img src="https://muhammaddheovani.web.id/logo/logo.png" alt="SubTrack8 Logo" style="height: 40px; margin-bottom: 8px;" />
+              <h1 style="font-size: 20px; margin: 0; color: #1e293b;">SubTrack8</h1>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 24px;">
+              <span style="background: ${isFamily ? '#8b5cf6' : '#0ea5e9'}; color: white; padding: 6px 16px; border-radius: 100px; font-size: 11px; font-weight: 800; text-transform: uppercase;">
+                ${isFamily ? '👨‍👩‍👧‍👦 Family Plan' : '👤 Individual Plan'}
+              </span>
+            </div>
+
+            <h2 style="color: #1e293b; text-align: center;">Halo, ${recipient.name}!</h2>
+            <p style="text-align: center; color: #64748b;">Pengingat untuk langganan <strong>${sub.serviceName}</strong>.</p>
+            
+            <div style="background: #f8fafc; padding: 24px; border-radius: 16px; margin-bottom: 24px; border: 1px solid #f1f5f9;">
+              <table style="width: 100%;">
+                <tr>
+                  <td style="color: #94a3b8; font-size: 13px;">Total Tagihan</td>
+                  <td style="text-align: right; font-weight: 800; color: #1e293b;">Rp ${sub.pricePaid.toLocaleString('id-ID')}</td>
+                </tr>
+                <tr>
+                  <td style="color: #94a3b8; font-size: 13px;">Jatuh Tempo</td>
+                  <td style="text-align: right; font-weight: bold; color: #64748b;">${sub.billingDate}</td>
+                </tr>
+              </table>
+              ${membersListHtml}
+            </div>
+
+            <div style="background: ${isFamily ? '#f5f3ff' : '#f0f9ff'}; padding: 16px; border-radius: 12px; border-left: 4px solid ${isFamily ? '#8b5cf6' : '#0ea5e9'};">
+              <p style="font-size: 14px; margin: 0;">
+                <strong>Info:</strong> ${recipient.isOwner
+                  ? `Jangan lupa kumpulkan iuran dari anggota sebesar <b>Rp ${pricePerPerson.toLocaleString('id-ID')}</b>.`
+                  : `Silahkan siapkan iuran Anda sebesar <b>Rp ${pricePerPerson.toLocaleString('id-ID')}</b> untuk diberikan kepada ${user.fullname || user.username}.`
+                }
+              </p>
+            </div>
+
+            ${telegramBtn}
+
+            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
+              <p style="font-size: 11px; color: #94a3b8; margin: 0;">
+                Email ini dikirim secara otomatis dari website <a href="https://subtrack8.com" style="color: #0ea5e9; text-decoration: none;">subtrack8.com</a>.
+              </p>
+            </div>
+          </div>`
+
+        if (recipient.email) {
+          return resend.emails.send({
+            from: 'SubTrack8 <notifications@muhammaddheovani.web.id>',
+            to: recipient.email,
+            subject: `🔔 Tagihan ${sub.serviceName} - Rp ${sub.pricePaid.toLocaleString('id-ID')}`,
+            html: htmlContent
+          })
+        }
       })
+
+      return await Promise.all(sendPromises)
     })
 
+    // 4. JADWALKAN UNTUK BULAN BERIKUTNYA
     await step.run("schedule-next-month", async () => {
-      const current = new Date(reminderDate);
+      const current = new Date(reminderDate)
       const cycle = sub.billingCycle || 1
-      const nextMonth = new Date(current.setMonth(current.getMonth() + cycle));
+      const nextMonth = new Date(current.setMonth(current.getMonth() + cycle))
       const nextDateStr = nextMonth.toISOString().split('T')[0]
 
       await Subscription.update(subId, sub.userId, { reminderDate: nextDateStr })
@@ -118,10 +196,11 @@ export const sendSubscriptionReminder = inngest.createFunction(
       })
     })
 
-    return { success: true, emailId: emailResult.id }
+    return { success: true, count: emailResults.length }
   }
 )
 
+// Fungsi pembatalan
 export const cancelSubscriptionReminder = inngest.createFunction(
   { id: "cancel-reminder" },
   { event: "app/subscription.reminder.cancel" },
