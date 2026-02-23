@@ -12,6 +12,8 @@ import {
   uploadFile,
   addReaction,
   getGroups,
+  getGroupMembers,
+  findOrCreateConversation,
   createGroup,
   addGroupMember,
   removeGroupMember,
@@ -25,12 +27,18 @@ export default function ChatPage() {
   // State management for chat application
   const [conversations, setConversations] = useState([]);
   const [groups, setGroups] = useState([]); // Store all groups
+  const [groupMembers, setGroupMembers] = useState([]); // Store all unique group members
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const socketRef = useRef(null);
-  const activeConversationRef = useRef(null);
+  const activeConversationRef = useRef(null); // Ref to avoid stale closure in socket listeners
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    activeConversationRef.current = activeConversationId;
+  }, [activeConversationId]);
 
   // Initialize user and Socket.IO connection
   useEffect(() => {
@@ -83,7 +91,6 @@ export default function ChatPage() {
           });
 
           // Update messages jika sedang di conversation yang sama
-          // Use ref to get current value (avoid stale closure)
           if (conversationId === activeConversationRef.current) {
             setMessages((prev) => [...prev, message]);
           }
@@ -110,9 +117,10 @@ export default function ChatPage() {
         });
       }
 
-      // Load conversations dan groups
+      // Load conversations, groups, and group members
       await loadConversations();
       await loadGroups();
+      await loadGroupMembers();
     } catch (error) {
       console.error("Error initializing chat:", error);
     } finally {
@@ -190,6 +198,16 @@ export default function ChatPage() {
     }
   };
 
+  // Load all unique group members
+  const loadGroupMembers = async () => {
+    try {
+      const data = await getGroupMembers();
+      setGroupMembers(data);
+    } catch (error) {
+      console.error("Error loading group members:", error);
+    }
+  };
+
   // Load messages when a conversation is selected
   useEffect(() => {
     // Update ref to avoid stale closure in socket listener
@@ -223,6 +241,23 @@ export default function ChatPage() {
     } catch (error) {
       console.error("Error loading messages:", error);
       setMessages([]);
+    }
+  };
+
+  // Handle starting/opening a conversation with a specific user
+  const handleStartConversation = async (userId) => {
+    try {
+      const result = await findOrCreateConversation(userId);
+      if (result.success) {
+        // If new conversation was created, reload conversations
+        if (result.isNew) {
+          await loadConversations();
+        }
+        // Select the conversation
+        setActiveConversationId(result.conversationId);
+      }
+    } catch (error) {
+      console.error("Error starting conversation:", error);
     }
   };
 
@@ -398,8 +433,10 @@ export default function ChatPage() {
       {/* Middle section with conversation list */}
       <MessageList
         conversations={conversations}
+        groupMembers={groupMembers}
         activeConversationId={activeConversationId}
         onSelectConversation={handleSelectConversation}
+        onStartConversation={handleStartConversation}
       />
 
       {/* Right section with active chat */}
