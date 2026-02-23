@@ -20,18 +20,34 @@ function StatusBadge({ status }) {
   )
 }
 
+// Badge status GroupRequest (full / closed)
+function GroupStatusBadge({ status }) {
+  if (status === "open") return null
+  const config = {
+    full: { label: "Full", bg: "bg-orange-50", text: "text-orange-400", border: "border-orange-100" },
+    closed: { label: "Closed", bg: "bg-slate-100", text: "text-slate-400", border: "border-slate-200" },
+  }
+  const c = config[status] || config.closed
+  return (
+    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border flex-shrink-0 ${c.bg} ${c.text} ${c.border}`}>
+      {c.label}
+    </span>
+  )
+}
+
 // Card untuk satu GroupRequest
-function GroupRequestCard({ groupRequest, requestStatus, currentUserId }) {
+function GroupRequestCard({ groupRequest, requestStatus, currentUserId, inactive }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState("")
 
-  const isOwner = groupRequest.owner?._id?.toString() === currentUserId || 
-                  groupRequest.ownerId?.toString() === currentUserId
+  const isOwner = groupRequest.owner?._id?.toString() === currentUserId ||
+    groupRequest.ownerId?.toString() === currentUserId
 
   const isFull = groupRequest.status === "full"
+  const isClosed = groupRequest.status === "closed"
+  const isInactive = isFull || isClosed
   const hasRequested = !!requestStatus
-  const isApproved = requestStatus === "approved"
 
   const handleRequest = () => {
     setError("")
@@ -49,10 +65,10 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId }) {
   const serviceName = groupRequest.service?.serviceName || "Unknown Service"
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-50 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-lg hover:border-sky-50 transition-all overflow-hidden group">
-      
+    <div className={`bg-white rounded-[2.5rem] border shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:shadow-lg transition-all overflow-hidden group ${isInactive ? "border-slate-100 opacity-60" : "border-slate-50 hover:border-sky-50"}`}>
+
       {/* Top accent bar */}
-      <div className={`h-1 w-full ${isFull ? "bg-slate-200" : "bg-sky-400"}`} />
+      <div className={`h-1 w-full ${isClosed ? "bg-slate-200" : isFull ? "bg-orange-200" : "bg-sky-400"}`} />
 
       <div className="p-8">
         {/* Header */}
@@ -70,11 +86,7 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-1">
               <h3 className="font-black text-slate-800 text-base leading-tight">{groupRequest.title}</h3>
-              {isFull && (
-                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-slate-100 text-slate-400 rounded-lg flex-shrink-0">
-                  Full
-                </span>
-              )}
+              <GroupStatusBadge status={groupRequest.status} />
             </div>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{serviceName}</p>
           </div>
@@ -117,6 +129,12 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId }) {
           >
             Manage →
           </Link>
+        ) : isInactive ? (
+          <div className="flex items-center justify-center py-4 rounded-2xl bg-slate-50 border border-slate-100">
+            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              {isClosed ? "Group Closed" : "No Slots Available"}
+            </span>
+          </div>
         ) : hasRequested ? (
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Your Request</span>
@@ -125,12 +143,25 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId }) {
         ) : (
           <button
             onClick={handleRequest}
-            disabled={isPending || isFull}
+            disabled={isPending}
             className="w-full bg-slate-900 hover:bg-sky-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-slate-100 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            {isPending ? "Sending..." : isFull ? "No Slots Available" : "Request to Join →"}
+            {isPending ? "Sending..." : "Request to Join →"}
           </button>
         )}
+      </div>
+    </div>
+  )
+}
+
+// Section header dengan counter
+function SectionHeader({ title, count, active }) {
+  return (
+    <div className="flex items-center gap-4 mb-6">
+      <div className={`w-2 h-8 rounded-full ${active ? "bg-sky-400" : "bg-slate-200"}`} />
+      <div>
+        <h2 className="text-lg font-black text-slate-800">{title}</h2>
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{count} group{count !== 1 ? "s" : ""}</p>
       </div>
     </div>
   )
@@ -155,6 +186,10 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
     )
   })
 
+  // Pisah active (open) dan inactive (full/closed)
+  const activeGroups = filtered.filter((gr) => gr.status === "open")
+  const inactiveGroups = filtered.filter((gr) => gr.status !== "open")
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 md:p-12 font-sans text-slate-900">
       <div className="max-w-6xl mx-auto">
@@ -173,20 +208,20 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
               Explore <span className="text-sky-500">Groups.</span>
             </h1>
             <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em]">
-              {groupRequests.length} Open Sharing Available
+              {activeGroups.length} Open Sharing Available
             </p>
           </div>
 
           <Link
-            href="/dashboard/group-requests/create"
+            href="/dashboard/group-requests"
             className="bg-slate-900 hover:bg-sky-500 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 flex items-center gap-3 active:scale-95 w-fit"
           >
-            <span className="text-lg leading-none">+</span> Open My Group
+             Open My Groups
           </Link>
         </div>
 
         {/* Search Bar */}
-        <div className="mb-8">
+        <div className="mb-10">
           <input
             type="text"
             value={search}
@@ -196,7 +231,6 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
           />
         </div>
 
-        {/* Grid */}
         {filtered.length === 0 ? (
           <div className="text-center py-32 bg-white rounded-[3.5rem] border-2 border-dashed border-slate-100">
             <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 transform rotate-12">
@@ -204,19 +238,47 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
             </div>
             <h3 className="text-slate-900 font-black text-lg mb-1">No Groups Found</h3>
             <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">
-              {search ? "Try a different search term." : "No open sharing groups yet."}
+              {search ? "Try a different search term." : "No sharing groups yet."}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((gr) => (
-              <GroupRequestCard
-                key={gr._id.toString()}
-                groupRequest={gr}
-                requestStatus={requestStatusMap[gr._id.toString()]}
-                currentUserId={currentUserId}
-              />
-            ))}
+          <div className="space-y-14">
+
+            {/* Section: Active */}
+            {activeGroups.length > 0 && (
+              <div>
+                <SectionHeader title="Active Groups" count={activeGroups.length} active={true} />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activeGroups.map((gr) => (
+                    <GroupRequestCard
+                      key={gr._id.toString()}
+                      groupRequest={gr}
+                      requestStatus={requestStatusMap[gr._id.toString()]}
+                      currentUserId={currentUserId}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Section: Inactive */}
+            {inactiveGroups.length > 0 && (
+              <div>
+                <SectionHeader title="Inactive Groups" count={inactiveGroups.length} active={false} />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {inactiveGroups.map((gr) => (
+                    <GroupRequestCard
+                      key={gr._id.toString()}
+                      groupRequest={gr}
+                      requestStatus={requestStatusMap[gr._id.toString()]}
+                      currentUserId={currentUserId}
+                      inactive={true}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
       </div>

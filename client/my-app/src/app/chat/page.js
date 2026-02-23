@@ -70,12 +70,31 @@ export default function ChatPage() {
 
         socketRef.current = socket;
 
+        // Connection status listeners
+        socket.on("connect", () => {
+          console.log("✅ Socket.IO connected:", socket.id);
+        });
+
+        socket.on("disconnect", (reason) => {
+          console.log("❌ Socket.IO disconnected:", reason);
+        });
+
+        socket.on("connect_error", (error) => {
+          console.error("🔴 Socket.IO connection error:", error);
+        });
+
         // Listen for incoming messages dari socket
         socket.on("receiveMessage", ({ conversationId, message }) => {
+          console.log("📩 Received message via socket:", {
+            conversationId,
+            message,
+          });
+
           // Update messages jika sedang di conversation yang sama
           if (conversationId === activeConversationRef.current) {
             setMessages((prev) => [...prev, message]);
           }
+
           // Reload conversations untuk update last message preview
           loadConversations();
         });
@@ -89,6 +108,12 @@ export default function ChatPage() {
         socket.on("userStoppedTyping", ({ conversationId, userId }) => {
           // TODO: Hide typing indicator UI
           console.log(`User ${userId} stopped typing in ${conversationId}`);
+        });
+
+        // Listen for message errors from server
+        socket.on("messageError", ({ error }) => {
+          console.error("❌ Message error from server:", error);
+          alert(`Failed to send message: ${error}`);
         });
       }
 
@@ -185,6 +210,9 @@ export default function ChatPage() {
 
   // Load messages when a conversation is selected
   useEffect(() => {
+    // Update ref to avoid stale closure in socket listener
+    activeConversationRef.current = activeConversationId;
+
     if (activeConversationId) {
       loadMessages(activeConversationId);
 
@@ -244,7 +272,7 @@ export default function ChatPage() {
 
     try {
       // Kirim via Socket.IO untuk real-time delivery
-      if (socketRef.current) {
+      if (socketRef.current && socketRef.current.connected) {
         socketRef.current.emit("sendMessage", {
           conversationId: activeConversationId,
           senderId: currentUser.userId,
@@ -253,19 +281,21 @@ export default function ChatPage() {
           fileUrl: messageData.fileUrl || null,
           fileName: messageData.fileName || null,
         });
-      }
+        console.log("📤 Message sent via socket");
+      } else {
+        // Fallback: kirim via server action jika socket belum ready
+        console.log("⚠️ Socket not connected, using server action fallback");
+        const result = await sendMessage(activeConversationId, {
+          ...messageData,
+          senderId: currentUser.userId,
+        });
 
-      // Fallback: kirim via server action jika socket belum ready
-      const result = await sendMessage(activeConversationId, {
-        ...messageData,
-        senderId: currentUser.userId,
-      });
-
-      if (result.success) {
-        // Reload messages untuk show new message (jika socket gagal)
-        await loadMessages(activeConversationId);
-        // Reload conversations untuk update last message preview
-        await loadConversations();
+        if (result.success) {
+          // Reload messages untuk show new message
+          await loadMessages(activeConversationId);
+          // Reload conversations untuk update last message preview
+          await loadConversations();
+        }
       }
     } catch (error) {
       console.error("Error sending message:", error);

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { approveMemberRequest, rejectMemberRequest, closeGroupRequest } from "@/actions/groupRequest"
+import { approveMemberRequest, rejectMemberRequest, closeGroupRequest, deleteGroupRequest } from "@/actions/groupRequest"
 
 function StatusBadge({ status }) {
   const config = {
@@ -50,19 +50,15 @@ function MemberRequestCard({ memberRequest, onApprove, onReject }) {
     }`}>
       <div className="p-6">
         <div className="flex items-center gap-4 mb-4">
-          {/* Avatar */}
           <div className="w-12 h-12 bg-slate-50 rounded-[1.25rem] flex items-center justify-center text-sm font-black text-slate-400 flex-shrink-0">
             {user?.fullname?.charAt(0) || user?.username?.charAt(0) || "?"}
           </div>
-
-          {/* Info user */}
           <div className="flex-1 min-w-0">
             <p className="font-black text-slate-800 text-sm truncate">
               {user?.fullname || user?.username || "Unknown User"}
             </p>
             <p className="text-[10px] text-slate-400 font-bold truncate">{user?.email || "—"}</p>
           </div>
-
           <StatusBadge status={memberRequest.status} />
         </div>
 
@@ -76,7 +72,6 @@ function MemberRequestCard({ memberRequest, onApprove, onReject }) {
           <p className="text-rose-400 text-[10px] font-bold uppercase tracking-wider mb-3">{error}</p>
         )}
 
-        {/* Action buttons — hanya tampil kalau masih pending */}
         {!isProcessed && (
           <div className="flex gap-3">
             <button
@@ -100,10 +95,44 @@ function MemberRequestCard({ memberRequest, onApprove, onReject }) {
   )
 }
 
+// Modal konfirmasi delete
+function DeleteModal({ onConfirm, onCancel, isPending }) {
+  return (
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl p-8 max-w-sm w-full">
+        <div className="w-14 h-14 bg-rose-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6">
+          <span className="text-2xl">🗑️</span>
+        </div>
+        <h3 className="text-lg font-black text-slate-800 text-center mb-2">Delete Group?</h3>
+        <p className="text-sm text-slate-400 font-medium text-center mb-8 leading-relaxed">
+          This will permanently delete the group along with all member requests and members. This action cannot be undone.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={isPending}
+            className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-500 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-40"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isPending}
+            className="flex-1 bg-rose-500 hover:bg-rose-400 text-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-40 shadow-lg shadow-rose-500/20"
+          >
+            {isPending ? "Deleting..." : "Yes, Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ManageGroupRequestClient({ groupRequest, memberRequests, service }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState("")
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   const pendingCount = memberRequests.filter(r => r.status === "pending").length
   const approvedCount = memberRequests.filter(r => r.status === "approved").length
@@ -124,7 +153,19 @@ export default function ManageGroupRequestClient({ groupRequest, memberRequests,
     startTransition(async () => {
       const result = await closeGroupRequest(groupRequest._id.toString())
       if (result?.error) setError(result.error)
-      else router.push("/dashboard/explore")
+      else router.push("/dashboard/group-requests")
+    })
+  }
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      const result = await deleteGroupRequest(groupRequest._id.toString())
+      if (result?.error) {
+        setError(result.error)
+        setShowDeleteModal(false)
+      } else {
+        router.push("/dashboard/group-requests")
+      }
     })
   }
 
@@ -143,11 +184,11 @@ export default function ManageGroupRequestClient({ groupRequest, memberRequests,
         <div className="flex items-center justify-between mb-12">
           <div>
             <Link
-              href="/dashboard/explore"
+              href="/dashboard/group-requests"
               className="group inline-flex items-center gap-2 text-slate-400 hover:text-sky-500 transition-colors mb-4"
             >
               <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Explore</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">My Groups</span>
             </Link>
             <h1 className="text-4xl font-black tracking-tight text-slate-900">
               Manage <span className="text-sky-500">Requests.</span>
@@ -157,16 +198,28 @@ export default function ManageGroupRequestClient({ groupRequest, memberRequests,
             </p>
           </div>
 
-          {/* Tombol close group — hanya tampil kalau masih open */}
-          {groupRequest.status === "open" && (
+          {/* Action buttons */}
+          <div className="flex items-center gap-3">
+            {/* Tombol Close — hanya saat open */}
+            {groupRequest.status === "open" && (
+              <button
+                onClick={handleClose}
+                disabled={isPending}
+                className="bg-white border border-slate-100 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-amber-500 hover:border-amber-100 transition-all shadow-sm disabled:opacity-40"
+              >
+                Close Group
+              </button>
+            )}
+
+            {/* Tombol Delete — selalu tampil */}
             <button
-              onClick={handleClose}
+              onClick={() => setShowDeleteModal(true)}
               disabled={isPending}
               className="bg-white border border-slate-100 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-rose-400 hover:border-rose-100 transition-all shadow-sm disabled:opacity-40"
             >
-              Close Group
+              Delete
             </button>
-          )}
+          </div>
         </div>
 
         {/* Info Card */}
@@ -246,6 +299,15 @@ export default function ManageGroupRequestClient({ groupRequest, memberRequests,
           )}
         </div>
       </div>
+
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <DeleteModal
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteModal(false)}
+          isPending={isPending}
+        />
+      )}
     </div>
   )
 }
