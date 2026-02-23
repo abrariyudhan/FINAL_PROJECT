@@ -40,4 +40,13 @@ export default class Member {
       })
       .toArray();
   }
+
+  static async updateTelegramId(memberId, chatId) {
+    const collection = await this.getCollection();
+    return await collection.updateOne(
+      { _id: new ObjectId(memberId) },
+      { $set: { telegramChatId: chatId.toString() } }
+    );
+  }
+  
 }
