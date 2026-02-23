@@ -21,7 +21,7 @@ export default function AddSubscriptionForm({ masterServices }) {
 
   const dropdownRef = useRef(null)
 
-  // Get today's date in YYYY-MM-DD format
+  // Tanggal hari ini untuk validasi input date
   const today = new Date().toISOString().split('T')[0]
 
   // Close dropdown saat klik di luar
