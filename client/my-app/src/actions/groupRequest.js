@@ -63,6 +63,42 @@ export async function closeGroupRequest(groupRequestId) {
   }
 }
 
+// Owner menghapus GroupRequest beserta semua data terkait (cascade)
+export async function deleteGroupRequest(groupRequestId) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return { error: "Unauthorized" };
+
+    // Pastikan GroupRequest milik user ini
+    const groupReq = await GroupRequest.getById(groupRequestId);
+    if (groupReq.ownerId.toString() !== user.userId) {
+      return { error: "You are not authorized to delete this group request" };
+    }
+
+    const { getDb } = await import("@/server/config/mongodb");
+    const { ObjectId } = await import("mongodb");
+    const db = await getDb();
+
+    // 1. Hapus semua MemberRequest yang terkait
+    await db.collection("memberRequests").deleteMany({
+      groupRequestId: new ObjectId(groupRequestId),
+    });
+
+    // 2. Hapus semua Member yang terkait
+    await db.collection("members").deleteMany({
+      groupRequestId: groupRequestId,
+    });
+
+    // 3. Hapus GroupRequest-nya
+    await GroupRequest.delete(groupRequestId, user.userId);
+
+    revalidatePath("/dashboard/group-requests");
+    return { success: true };
+  } catch (error) {
+    return { error: error.message || "Failed to delete group request" };
+  }
+}
+
 // ============================================================
 // MEMBER REQUEST ACTIONS (User yang ingin bergabung)
 // ============================================================
@@ -126,11 +162,6 @@ async function createGroupFromRequest(groupRequestId) {
       memberIds.push(ownerIdString);
     }
 
-    console.log(
-      `📝 Creating group for ${groupReq.title} with ${memberIds.length} members:`,
-      memberIds,
-    );
-
     // Create Group
     const groupResult = await Group.create({
       name: groupReq.title,
@@ -144,14 +175,10 @@ async function createGroupFromRequest(groupRequestId) {
     // Create Chat untuk group
     const chatResult = await Chat.create({
       participants: memberIds,
-      type: "group", // Group chat
+      type: "group",
       groupId: groupId,
     });
 
-    console.log(
-      `✅ Group chat created for GroupRequest ${groupRequestId}, Chat ID: ${chatResult.insertedId}`,
-    );
-    console.log(`   Participants:`, memberIds);
     return { success: true, groupId };
   } catch (error) {
     console.error("Error creating group:", error);
@@ -160,21 +187,16 @@ async function createGroupFromRequest(groupRequestId) {
 }
 
 // Owner meng-approve MemberRequest
-// Saat approve: update status + kurangi slot + buat Member baru
 export async function approveMemberRequest(memberRequestId) {
   try {
     const user = await getCurrentUser();
     if (!user) return { error: "Unauthorized" };
 
-    // Ambil MemberRequest
     const memberReq = await MemberRequest.getById(memberRequestId);
-
-    // Ambil GroupRequest secara terpisah
     const groupReq = await GroupRequest.getById(
       memberReq.groupRequestId.toString(),
     );
 
-    // Pastikan yang approve adalah owner
     if (groupReq.ownerId.toString() !== user.userId) {
       return { error: "You are not authorized to approve this request" };
     }
@@ -187,7 +209,6 @@ export async function approveMemberRequest(memberRequestId) {
       return { error: "No available slots" };
     }
 
-    // Ambil data user yang request
     const { getDb } = await import("@/server/config/mongodb");
     const { ObjectId } = await import("mongodb");
     const db = await getDb();
@@ -206,7 +227,7 @@ export async function approveMemberRequest(memberRequestId) {
       subscriptionId:
         groupReq.subscriptionId?.toString() || groupReq._id.toString(),
       userId: memberReq.userId.toString(),
-      groupRequestId: memberReq.groupRequestId.toString(), // Link ke GroupRequest
+      groupRequestId: memberReq.groupRequestId.toString(),
       name: requestUser?.fullname || requestUser?.username || "Unknown",
       email: requestUser?.email || "",
       phone: requestUser?.phoneNumber || "",
@@ -221,7 +242,7 @@ export async function approveMemberRequest(memberRequestId) {
     }
 
     revalidatePath(`/dashboard/group-requests/${memberReq.groupRequestId}`);
-    revalidatePath("/chat"); // Refresh chat page
+    revalidatePath("/chat");
     return { success: true };
   } catch (error) {
     return { error: error.message || "Failed to approve request" };
