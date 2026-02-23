@@ -19,6 +19,7 @@ import {
   markConversationAsRead,
 } from "@/actions/chat";
 import { getCurrentUser } from "@/actions/auth";
+import { syncGroupChats } from "@/actions/syncChats";
 
 export default function ChatPage() {
   // State management for chat application
@@ -96,7 +97,28 @@ export default function ChatPage() {
   const loadConversations = async () => {
     try {
       setIsLoading(true);
-      const data = await getConversations();
+      let data = await getConversations();
+
+      console.log("Loaded conversations:", data.length, data); // Debug log
+
+      // If no conversations found, try syncing group chats
+      if (data.length === 0) {
+        console.log(
+          "🔄 No conversations found, attempting to sync group chats...",
+        );
+        const syncResult = await syncGroupChats();
+        if (
+          syncResult.success &&
+          (syncResult.groupsCreated > 0 || syncResult.chatsCreated > 0)
+        ) {
+          console.log(
+            `✅ Synced ${syncResult.groupsCreated || 0} groups and ${syncResult.chatsCreated || 0} chats, reloading...`,
+          );
+          // Reload conversations after sync
+          data = await getConversations();
+          console.log("After sync:", data.length, data);
+        }
+      }
 
       // Map conversations dengan participant details dari backend
       const mappedConversations = data.map((conv) => {
@@ -114,14 +136,11 @@ export default function ChatPage() {
             userAvatar: otherParticipant?.avatar || null,
           };
         } else {
-          // Untuk group chats, show semua participant names atau group name
-          const participantNames = conv.participantDetails
-            ?.map((p) => p.fullname || p.username)
-            .join(", ");
+          // Untuk group chats, gunakan group name dari database
           return {
             ...conv,
-            userName: participantNames || "Group Chat",
-            userAvatar: null, // Groups biasanya punya avatar terpisah
+            userName: conv.groupName || "Group Chat",
+            userAvatar: null, // Groups bisa punya avatar terpisah nanti
           };
         }
       });

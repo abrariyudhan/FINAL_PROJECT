@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { getDb } from "../config/mongodb";
+import { getDb } from "../config/mongodb.js";
 
 export default class Chat {
   static async getCollection() {
@@ -17,10 +17,17 @@ export default class Chat {
   }
 
   // Get all conversations with populated participant details (names, avatars)
-  static async getAllWithParticipants() {
+  static async getAllWithParticipants(userId = null) {
     const collection = await this.getCollection();
+
+    // Build match filter - if userId provided, only get chats where user is participant
+    const matchStage = userId ? { participants: userId } : {};
+
     return await collection
       .aggregate([
+        {
+          $match: matchStage, // Filter by current user's participation
+        },
         {
           $addFields: {
             // Convert participant strings to ObjectIds for lookup
@@ -39,6 +46,26 @@ export default class Chat {
             localField: "participantIds",
             foreignField: "_id",
             as: "participantDetails",
+          },
+        },
+        {
+          $addFields: {
+            // Convert groupId string to ObjectId if exists
+            groupObjectId: {
+              $cond: {
+                if: { $ne: ["$groupId", null] },
+                then: { $toObjectId: "$groupId" },
+                else: null,
+              },
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "groups",
+            localField: "groupObjectId",
+            foreignField: "_id",
+            as: "groupDetails",
           },
         },
         {
@@ -64,10 +91,16 @@ export default class Chat {
                 },
               },
             },
+            // Get group name if it's a group chat
+            groupName: { $arrayElemAt: ["$groupDetails.name", 0] },
           },
         },
         {
-          $sort: { "lastMessage.timestamp": -1 }, // Sort by most recent message
+          // Sort: chats with messages first (by timestamp), then new chats by createdAt
+          $sort: {
+            "lastMessage.timestamp": -1,
+            createdAt: -1,
+          },
         },
       ])
       .toArray();
