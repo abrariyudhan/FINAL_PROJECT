@@ -126,6 +126,11 @@ async function createGroupFromRequest(groupRequestId) {
       memberIds.push(ownerIdString);
     }
 
+    console.log(
+      `📝 Creating group for ${groupReq.title} with ${memberIds.length} members:`,
+      memberIds,
+    );
+
     // Create Group
     const groupResult = await Group.create({
       name: groupReq.title,
@@ -137,13 +142,16 @@ async function createGroupFromRequest(groupRequestId) {
     const groupId = groupResult.insertedId.toString();
 
     // Create Chat untuk group
-    await Chat.create({
+    const chatResult = await Chat.create({
       participants: memberIds,
       type: "group", // Group chat
       groupId: groupId,
     });
 
-    console.log(`✅ Group chat created for GroupRequest ${groupRequestId}`);
+    console.log(
+      `✅ Group chat created for GroupRequest ${groupRequestId}, Chat ID: ${chatResult.insertedId}`,
+    );
+    console.log(`   Participants:`, memberIds);
     return { success: true, groupId };
   } catch (error) {
     console.error("Error creating group:", error);

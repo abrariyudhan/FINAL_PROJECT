@@ -92,6 +92,9 @@ export async function updateFullSubscription(formData) {
   let isSuccess = false
 
   try {
+    const user = await getCurrentUser()
+    if (!user.userId) throw new Error("Unauthorized")
+
     const serviceName = formData.get("serviceName")
     const isReminderActive = formData.get("isReminderActive") === "on"
     const billingDate = formData.get("billingDate")
@@ -120,7 +123,7 @@ export async function updateFullSubscription(formData) {
     }
 
     // Update data utama subscription
-    await Subscription.update(id, updatedData)
+    await Subscription.update(id, user.userId, updatedData)
 
     // Update/Tambah member baru jika ada
     const memberNames = formData.getAll("memberName[]")
@@ -160,11 +163,18 @@ export async function updateFullSubscription(formData) {
 
 export async function deleteSubscription(id) {
   try {
+    const user = await getCurrentUser()
+    if (!user.userId) throw new Error("Unauthorized")
+      
+    // Pastikan user memiliki akses ke subscription ini
+    const sub = await Subscription.getByUserAndId(user.userId, id)
+    if (!sub) throw new Error("Subscription not found or access denied")
+
     // Bersihkan semua member terkait
-    await Member.deleteBySubscriptionId(id)
+    await Member.deleteBySubscriptionId(id, user.userId)
     
     // Hapus data utama
-    await Subscription.delete(id)
+    await Subscription.delete(id,user.userId)
 
     revalidatePath("/dashboard")
   } catch (error) {

@@ -2,12 +2,17 @@ import Subscription from "@/server/models/Subscription";
 import Member from "@/server/models/Member";
 import { format } from "date-fns";
 import Link from "next/link";
+import { getCurrentUser } from "@/actions/auth";
 
 export default async function SubscriptionDetailPage({ params }) {
   const { id } = await params
-
+  const user = await getCurrentUser()
+  if (!user.userId) {
+    redirect("/")
+  }
+  
   try {
-    const sub = await Subscription.getById(id)
+    const sub = await Subscription.getByUserAndId(user.userId, id)
     const members = await Member.getBySubscriptionId(id)
 
     // LOGIKA PERHITUNGAN

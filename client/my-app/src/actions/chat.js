@@ -7,7 +7,13 @@ import { revalidatePath } from "next/cache";
 // Fetch all conversations sorted by most recent
 export async function getConversations() {
   try {
-    const conversations = await Chat.getAllWithParticipants(); // Get conversations with user details
+    // Get current user untuk filter conversations
+    const { getCurrentUser } = await import("./auth");
+    const user = await getCurrentUser();
+    const userId = user?.userId;
+
+    const conversations = await Chat.getAllWithParticipants(userId); // Get conversations with user details, filtered by user
+
     // Convert ObjectIds to strings for client-side rendering
     return JSON.parse(JSON.stringify(conversations));
   } catch (error) {
