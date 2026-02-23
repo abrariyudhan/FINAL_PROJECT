@@ -112,19 +112,29 @@ export default function ChatArea({
       <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
         {messages && messages.length > 0 ? (
           <div className="max-w-3xl mx-auto">
-            {messages.map((message) => (
-              <MessageBubble
-                key={message._id}
-                message={message}
-                isOwnMessage={message.senderId === currentUserId}
-                onReaction={(messageId, emoji) =>
-                  onReaction(activeConversation._id, messageId, {
-                    userId: currentUserId,
-                    emoji,
-                  })
-                }
-              />
-            ))}
+            {messages.map((message) => {
+              // Find sender details from participantDetails
+              const sender = activeConversation.participantDetails?.find(
+                (p) => p._id === message.senderId,
+              );
+              const senderName =
+                sender?.fullname || sender?.username || "Unknown";
+
+              return (
+                <MessageBubble
+                  key={message._id}
+                  message={message}
+                  senderName={senderName}
+                  isOwnMessage={message.senderId === currentUserId}
+                  onReaction={(messageId, emoji) =>
+                    onReaction(activeConversation._id, messageId, {
+                      userId: currentUserId,
+                      emoji,
+                    })
+                  }
+                />
+              );
+            })}
             {/* Scroll anchor */}
             <div ref={messagesEndRef} />
           </div>
