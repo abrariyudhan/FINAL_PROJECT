@@ -243,3 +243,106 @@ export async function deleteGroup(groupId) {
     return { success: false, error: error.message };
   }
 }
+
+// Get all unique members from user's groups with their details
+export async function getGroupMembers() {
+  try {
+    const { getCurrentUser } = await import("./auth");
+    const user = await getCurrentUser();
+    const userId = user?.userId;
+
+    if (!userId) {
+      return [];
+    }
+
+    // Get all groups where the user is a member
+    const groups = await Group.getAll();
+    const userGroups = groups.filter((group) =>
+      group.members?.includes(userId),
+    );
+
+    // Collect all unique member IDs (excluding current user)
+    const memberIds = new Set();
+    userGroups.forEach((group) => {
+      group.members?.forEach((memberId) => {
+        if (memberId !== userId) {
+          memberIds.add(memberId);
+        }
+      });
+    });
+
+    // Get user details for all members
+    const User = (await import("@/server/models/User")).default;
+    const { ObjectId } = await import("mongodb");
+    const userCollection = await User.getCollection();
+
+    const members = await userCollection
+      .find({
+        _id: { $in: Array.from(memberIds).map((id) => new ObjectId(id)) },
+      })
+      .toArray();
+
+    // Return member details with safe fields only
+    return JSON.parse(
+      JSON.stringify(
+        members.map((member) => ({
+          _id: member._id.toString(),
+          fullname: member.fullname,
+          username: member.username,
+          email: member.email,
+          avatar: member.avatar || null,
+        })),
+      ),
+    );
+  } catch (error) {
+    console.error("Error fetching group members:", error);
+    return [];
+  }
+}
+
+// Find or create a direct conversation with a specific user
+export async function findOrCreateConversation(otherUserId) {
+  try {
+    const { getCurrentUser } = await import("./auth");
+    const user = await getCurrentUser();
+    const userId = user?.userId;
+
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
+    // Check if conversation already exists between these two users
+    const conversations = await Chat.getAll();
+    const existingConv = conversations.find(
+      (conv) =>
+        conv.type === "direct" &&
+        conv.participants?.length === 2 &&
+        conv.participants.includes(userId) &&
+        conv.participants.includes(otherUserId),
+    );
+
+    if (existingConv) {
+      return {
+        success: true,
+        conversationId: existingConv._id.toString(),
+        isNew: false,
+      };
+    }
+
+    // Create new direct conversation
+    const result = await Chat.create({
+      participants: [userId, otherUserId],
+      type: "direct",
+    });
+
+    revalidatePath("/chat");
+    return {
+      success: true,
+      conversationId: result.insertedId.toString(),
+      isNew: true,
+    };
+  } catch (error) {
+    console.error("Error finding/creating conversation:", error);
+    return { success: false, error: error.message };
+  }
+}
