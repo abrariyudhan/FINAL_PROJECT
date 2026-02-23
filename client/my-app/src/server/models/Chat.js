@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { getDb } from "../config/mongodb";
+import { getDb } from "../config/mongodb.js";
 
 export default class Chat {
   static async getCollection() {

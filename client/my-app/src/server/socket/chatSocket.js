@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import Chat from "../models/Chat";
+import Chat from "../models/Chat.js";
 
 export function initChatSocket(server) {
   const io = new Server(server, {

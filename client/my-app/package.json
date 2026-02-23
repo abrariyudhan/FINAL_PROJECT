@@ -2,8 +2,11 @@
   "name": "my-app",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
+    "socket:dev": "node socketServer.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run socket:dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -26,6 +29,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "babel-plugin-react-compiler": "1.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4"
