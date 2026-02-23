@@ -4,7 +4,12 @@ import { format } from "date-fns";
 import FileAttachment from "./FileAttachment";
 
 // Component to display a single message bubble
-export default function MessageBubble({ message, isOwnMessage, onReaction }) {
+export default function MessageBubble({
+  message,
+  senderName,
+  isOwnMessage,
+  onReaction,
+}) {
   // Extract message data dari backend Chat model
   const {
     content,
@@ -53,6 +58,13 @@ export default function MessageBubble({ message, isOwnMessage, onReaction }) {
       <div
         className={`flex flex-col gap-1 max-w-[60%] ${isOwnMessage ? "items-end" : "items-start"}`}
       >
+        {/* Sender Name (only show for received messages) */}
+        {!isOwnMessage && senderName && (
+          <span className="text-xs font-bold text-slate-600 px-2">
+            {senderName}
+          </span>
+        )}
+
         {/* Message Bubble */}
         <div
           className={`relative group ${
