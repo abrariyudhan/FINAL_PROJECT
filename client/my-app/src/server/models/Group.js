@@ -27,6 +27,7 @@ export default class Group {
       name: data.name,
       description: data.description || "",
       members: data.members || [], // Array of member IDs
+      groupRequestId: data.groupRequestId || null, // Link ke GroupRequest jika dari subscription sharing
       createdAt: new Date(),
     });
     return result;

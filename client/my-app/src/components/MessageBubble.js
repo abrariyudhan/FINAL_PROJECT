@@ -5,12 +5,13 @@ import FileAttachment from "./FileAttachment";
 
 // Component to display a single message bubble
 export default function MessageBubble({ message, isOwnMessage, onReaction }) {
+  // Extract message data dari backend Chat model
   const {
     content,
-    type,
+    type, // 'text', 'image', or 'file'
     fileUrl,
     fileName,
-    reactions,
+    reactions, // Array of {userId, emoji}
     timestamp,
     senderAvatar,
   } = message;

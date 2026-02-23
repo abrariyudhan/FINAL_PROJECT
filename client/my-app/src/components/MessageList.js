@@ -14,18 +14,23 @@ export default function MessageList({
 
   // Filter conversations based on search query and active tab
   const filteredConversations = conversations.filter((conv) => {
-    // Search filter
+    // Search filter - cari di nama atau last message
     const matchesSearch =
       conv.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.lastMessage?.toLowerCase().includes(searchQuery.toLowerCase());
+      conv.lastMessage?.content
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
-    // Tab filter (this would need actual conversation type data)
+    // Tab filter - filter berdasarkan conversation type
     let matchesTab = true;
     if (activeTab === "PEOPLE") {
+      // Show direct/1-on-1 conversations
       matchesTab = conv.type === "direct" || !conv.type;
     } else if (activeTab === "GROUPS") {
+      // Show group conversations
       matchesTab = conv.type === "group";
     }
+    // ALL tab shows semua conversations
 
     return matchesSearch && matchesTab;
   });
