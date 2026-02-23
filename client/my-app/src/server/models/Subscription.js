@@ -63,7 +63,7 @@ export default class Subscription {
     return result
   }
 
-  static async update(id, data) {
+  static async update(id, userId, data) {
     const collection = await this.getCollection()
     const existing = await this.getByUserAndId(userId, id)
     if (!existing) throw new NotFound("Subscription not found or access denied")
@@ -77,7 +77,7 @@ export default class Subscription {
     )
   }
 
-  static async delete(id) {
+  static async delete(id, userId) {
     const collection = await this.getCollection()
     const existing = await this.getByUserAndId(userId, id)
     if (!existing) throw new NotFound("Subscription not found or access denied")

@@ -8,7 +8,7 @@ export default async function SubscriptionDetailPage({ params }) {
   const { id } = await params
   const user = await getCurrentUser()
   if (!user.userId) {
-    redirect("/")
+    redirect("/dashboard")
   }
   
   try {

@@ -119,7 +119,8 @@ export async function updateFullSubscription(formData) {
       pricePaid: Number(formData.get("pricePaid")),
       reminderDate: reminderDate,
       isReminderActive: isReminderActive,
-      type: formData.get("type"), 
+      type: formData.get("type"),
+      userId: user.userId,
     }
 
     // Update data utama subscription

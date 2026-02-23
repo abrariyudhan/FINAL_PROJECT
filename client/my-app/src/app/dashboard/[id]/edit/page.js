@@ -3,12 +3,25 @@ import Member from "@/server/models/Member";
 import MasterData from "@/server/models/MasterData";
 import Link from "next/link";
 import EditForm from "@/components/EditForm";
+import { getCurrentUser } from "@/actions/auth";
+import { notFound, redirect } from "next/navigation";
 
 export default async function EditPage({ params }) {
   const { id } = await params
 
   try {
-    const sub = await Subscription.getById(id)
+    // VERIFY USER IS LOGGED IN
+    const user = await getCurrentUser()
+    if (!user?.userId) {
+      redirect("/login")
+    }
+
+    // VERIFY OWNERSHIP - Use getByUserAndId instead of getById
+    const sub = await Subscription.getByUserAndId(user.userId, id)
+    if (!sub) {
+      notFound() // Show 404 if not found or not owned by user
+    }
+
     const members = await Member.getBySubscriptionId(id)
 
     // CEK APAKAH INI DATA DARI MASTER DATA
