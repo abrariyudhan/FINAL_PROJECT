@@ -21,6 +21,9 @@ export default function AddSubscriptionForm({ masterServices }) {
 
   const dropdownRef = useRef(null)
 
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0]
+
   // Close dropdown saat klik di luar
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -189,11 +192,25 @@ export default function AddSubscriptionForm({ masterServices }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-50">
                 <div>
                   <label className={labelStyles}>Next Billing Date</label>
-                  <input name="billingDate" type="date" onChange={(e) => setBillingDate(e.target.value)} className={inputStyles} required />
+                  <input 
+                    name="billingDate" 
+                    type="date" 
+                    min={today}
+                    onChange={(e) => setBillingDate(e.target.value)} 
+                    className={inputStyles} 
+                    required 
+                  />
                 </div>
                 <div>
                   <label className={labelStyles}>Reminder Date</label>
-                  <input name="reminderDate" type="date" max={billingDate} className={inputStyles} required />
+                  <input 
+                    name="reminderDate" 
+                    type="date" 
+                    min={today}
+                    max={billingDate} 
+                    className={inputStyles} 
+                    required 
+                  />
                 </div>
               </div>
 
@@ -257,8 +274,9 @@ export default function AddSubscriptionForm({ masterServices }) {
                       <input 
                         name="pricePaid" 
                         type="number" 
+                        min="0"
                         placeholder="0"
-                        onChange={(e) => setPrice(Number(e.target.value))} 
+                        onChange={(e) => setPrice(Math.max(0, Number(e.target.value)))} 
                         className="bg-transparent text-4xl font-black text-white outline-none w-full tracking-tighter placeholder:text-slate-800" 
                         required 
                       />
