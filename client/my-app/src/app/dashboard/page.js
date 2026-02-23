@@ -1,20 +1,17 @@
-import { getDb } from "@/server/config/mongodb";
 import { startOfDay } from "date-fns";
 import Link from "next/link";
 import SubCard from "@/components/SubCard";
 import SubTable from "@/components/SubTable";
 import { getCurrentUser } from "@/actions/auth";
 import LogoutButton from "@/components/LogoutButton";
+import Subscription from "@/server/models/Subscription";
 
 export default async function DashboardPage() {
-  const user = await getCurrentUser()
-  const db = await getDb()
-  const subscriptions = await db.collection("subscriptions")
-    .find({})
-    .sort({ billingDate: 1 })
-    .toArray()
 
-  const totalMonthly = subscriptions.reduce((acc, curr) => acc + curr.pricePaid, 0)
+  const user = await getCurrentUser()
+  const subscriptions = user.userId ? await Subscription.getByUser(user.userId) : []
+
+  const totalMonthly = subscriptions.reduce((acc, curr) => acc + curr.pricePaid, 0);
   const today = startOfDay(new Date())
 
   const statsConfig = [
@@ -65,7 +62,7 @@ export default async function DashboardPage() {
           <div className="flex items-center gap-3">
             {user && (
               <span className="text-sm font-bold text-slate-500 hidden md:block">
-                Hi, {user.name}
+                Hi, {user.fullname || user.username}
               </span>
             )}
             <Link href="/dashboard/add-subscription" className="hidden md:flex bg-slate-900 hover:bg-sky-500 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 items-center gap-3 active:scale-95">
