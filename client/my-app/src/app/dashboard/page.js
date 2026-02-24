@@ -36,13 +36,6 @@ export default async function DashboardPage() {
       bgColor: "bg-white",
       accent: "bg-violet-400"
     },
-    { 
-      label: "Savings", 
-      value: "Rp 0", 
-      textColor: "text-slate-900", 
-      bgColor: "bg-white",
-      accent: "bg-orange-400"
-    },
   ]
 
   return (
@@ -72,7 +65,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-12">
           {statsConfig.map((stat, i) => (
             <div key={i} className={`${stat.bgColor} p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] relative overflow-hidden group transition-all hover:shadow-lg`}>
 

@@ -48,5 +48,18 @@ export default class Member {
       { $set: { telegramChatId: chatId.toString() } }
     );
   }
-  
+
+  static async update(id, data) {
+    const collection = await this.getCollection();
+    return await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $set: { 
+          ...data, 
+          updatedAt: new Date() 
+        } 
+      }
+    );
+  }
+
 }
