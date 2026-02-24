@@ -15,13 +15,23 @@ export default async function GroupRequestsPage() {
   // === SECTION 1: Group yang dibuat user sebagai Owner ===
   const myGroupRequests = await GroupRequest.getByOwnerId(user.userId);
 
-  // Enrich dengan data service
   const myGroupRequestsWithService = await Promise.all(
     myGroupRequests.map(async (gr) => {
-      const service = gr.serviceId
-        ? await db.collection("services").findOne({ _id: new ObjectId(gr.serviceId.toString()) })
-        : null;
-      // Hitung jumlah member yang approved
+      // Ambil service via subscription
+      let service = null
+      if (gr.subscriptionId) {
+        const subscription = await db.collection("subscriptions").findOne({
+          _id: new ObjectId(gr.subscriptionId.toString())
+        })
+        if (subscription) {
+          service = {
+            serviceName: subscription.serviceName,
+            logo: subscription.logo,
+            category: subscription.category,
+          }
+        }
+      }
+
       const approvedCount = await db.collection("memberRequests").countDocuments({
         groupRequestId: new ObjectId(gr._id.toString()),
         status: "approved",
@@ -30,6 +40,7 @@ export default async function GroupRequestsPage() {
         groupRequestId: new ObjectId(gr._id.toString()),
         status: "pending",
       });
+
       return { ...gr, service, approvedCount, pendingCount };
     })
   );
@@ -38,7 +49,6 @@ export default async function GroupRequestsPage() {
   const myMemberRequests = await MemberRequest.getByUserId(user.userId);
   const approvedMemberRequests = myMemberRequests.filter((r) => r.status === "approved");
 
-  // Enrich dengan data GroupRequest + service
   const joinedGroups = await Promise.all(
     approvedMemberRequests.map(async (mr) => {
       const gr = await db.collection("groupRequests").findOne({
@@ -46,13 +56,25 @@ export default async function GroupRequestsPage() {
       });
       if (!gr) return null;
 
-      const service = gr.serviceId
-        ? await db.collection("services").findOne({ _id: new ObjectId(gr.serviceId.toString()) })
-        : null;
+      // Ambil service via subscription
+      let service = null
+      if (gr.subscriptionId) {
+        const subscription = await db.collection("subscriptions").findOne({
+          _id: new ObjectId(gr.subscriptionId.toString())
+        })
+        if (subscription) {
+          service = {
+            serviceName: subscription.serviceName,
+            logo: subscription.logo,
+            category: subscription.category,
+          }
+        }
+      }
 
-      const owner = await db.collection("users").findOne({
-        _id: new ObjectId(gr.ownerId.toString()),
-      });
+      const owner = await db.collection("users").findOne(
+        { _id: new ObjectId(gr.ownerId.toString()) },
+        { projection: { fullname: 1, username: 1, email: 1 } }
+      );
 
       return { ...gr, service, owner, memberRequestId: mr._id };
     })
