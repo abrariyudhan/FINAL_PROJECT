@@ -145,16 +145,12 @@ export async function updateFullSubscription(formData) {
       userId: user.userId,
     }
 
-<<<<<<< HEAD
-    await Subscription.update(id, user.userId, updatedData)
 
-=======
     // Update data utama
     await Subscription.update(id, user.userId, updatedData)
 
     // Handle Update/Tambah Member
     const memberIds = formData.getAll("memberId[]")
->>>>>>> fb2667c4018cf7b46f7aae12f236e533e8160226
     const memberNames = formData.getAll("memberName[]")
     const memberEmails = formData.getAll("memberEmail[]")
     const memberPhones = formData.getAll("memberPhone[]")
@@ -172,17 +168,6 @@ export async function updateFullSubscription(formData) {
           throw new Error(`Member "${name}" must provide either an email address or a phone number.`);
         }
 
-<<<<<<< HEAD
-        await Member.create({
-          subscriptionId: id,
-          name: memberNames[i],
-          email,
-          phone,
-          userId: null,
-        })
-      }
-    }
-
     try {
       if (!isReminderActive && existingSub.isReminderActive) {
         await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
@@ -195,7 +180,6 @@ export async function updateFullSubscription(formData) {
       }
     } catch (inngestError) {
       console.error("Inngest event error (non-critical):", inngestError)
-=======
         if (mId && mId !== "") {
           memberUpdatePromises.push(Member.update(mId, {
             name: name,
@@ -256,7 +240,6 @@ export async function updateFullSubscription(formData) {
       }
     } catch (inngestError) {
       console.error("Inngest event error:", inngestError)
->>>>>>> fb2667c4018cf7b46f7aae12f236e533e8160226
     }
 
     revalidatePath(`/dashboard/${id}`)
@@ -277,15 +260,12 @@ export async function deleteSubscription(id) {
     const sub = await Subscription.getByUserAndId(user.userId, id)
     if (!sub) throw new Error("Subscription not found or access denied")
 
-<<<<<<< HEAD
-=======
     // Batalkan reminder di Inngest sebelum hapus data
     await inngest.send({
       name: "app/subscription.reminder.cancel",
       data: { subId: id }
     })
 
->>>>>>> fb2667c4018cf7b46f7aae12f236e533e8160226
     await Member.deleteBySubscriptionId(id, user.userId)
     await Subscription.delete(id, user.userId)
 
