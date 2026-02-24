@@ -30,7 +30,7 @@ export default function ChatPage() {
   const [groupMembers, setGroupMembers] = useState([]); // Store all unique group members
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Changed to false to disable loading animation
   const [currentUser, setCurrentUser] = useState(null);
   const socketRef = useRef(null);
   const activeConversationRef = useRef(null); // Ref to avoid stale closure in socket listeners
@@ -417,18 +417,6 @@ export default function ChatPage() {
   const activeConversation = conversations.find(
     (conv) => conv._id === activeConversationId,
   );
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm font-bold text-slate-400">Loading chat...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-screen flex bg-slate-50 overflow-hidden">
