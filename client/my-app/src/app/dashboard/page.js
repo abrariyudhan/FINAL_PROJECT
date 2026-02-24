@@ -9,7 +9,42 @@ import Subscription from "@/server/models/Subscription";
 export default async function DashboardPage() {
 
   const user = await getCurrentUser()
-  const subscriptions = user.userId ? await Subscription.getByUser(user.userId) : []
+
+  // Subscription milik sendiri (sebagai owner)
+  const ownedSubscriptions = user.userId ? await Subscription.getByUser(user.userId) : []
+
+  // Subscription yang diikuti sebagai member (join group sharing)
+  const { getDb } = await import("@/server/config/mongodb")
+  const { ObjectId } = await import("mongodb")
+  const db = await getDb()
+
+  const memberDocs = await db.collection("members")
+    .find({ userId: user.userId })
+    .toArray()
+
+  const joinedSubscriptions = await Promise.all(
+    memberDocs
+      .filter((m) => m.subscriptionId)
+      .map(async (m) => {
+        try {
+          const sub = await db.collection("subscriptions").findOne({
+            _id: new ObjectId(m.subscriptionId.toString())
+          })
+          return sub ? { ...sub, _isJoined: true } : null
+        } catch { return null }
+      })
+  )
+
+  // Gabungkan, hindari duplikat
+  const joinedFiltered = joinedSubscriptions.filter(Boolean)
+  const subscriptions = [
+    ...ownedSubscriptions,
+    ...joinedFiltered.filter(
+      (j) => !ownedSubscriptions.find(
+        (o) => o._id.toString() === j._id.toString()
+      )
+    )
+  ]
 
   const totalMonthly = subscriptions.reduce((acc, curr) => acc + curr.pricePaid, 0);
   const today = startOfDay(new Date())
@@ -146,7 +181,7 @@ export default async function DashboardPage() {
 
           {/* Desktop Table */}
           <div className="hidden md:block bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
-            <SubTable subscriptions={subscriptions} today={today} />
+            <SubTable subscriptions={JSON.parse(JSON.stringify(subscriptions))} today={today} />
           </div>
 
           {/* Mobile Cards */}
