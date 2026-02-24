@@ -4,9 +4,14 @@ export default function Home() {
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            SubTrack8
-          </h1>
+          <div className="flex justify-center mb-8">
+            <img
+              src="https://i.ibb.co.com/1tJPNJP7/Sub-Track8-cropped-removebg.png"
+              alt="SubTrack8 Logo"
+              className="w-48 md:w-64 lg:w-72 h-auto"
+            />
+          </div>
+
           <p className="text-2xl text-gray-700 mb-4">
             Manage all your subscriptions in one place
           </p>
