@@ -71,7 +71,7 @@ export default function MessageInput({ onSendMessage, onUploadFile }) {
     <div className="border-t border-slate-100 p-4 bg-white">
       <div className="flex items-end gap-3">
         {/* Upload File Button */}
-        <button
+        {/* <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
           className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
@@ -115,16 +115,16 @@ export default function MessageInput({ onSendMessage, onUploadFile }) {
               />
             </svg>
           )}
-        </button>
+        </button> */}
 
         {/* Hidden file input */}
-        <input
+        {/* <input
           ref={fileInputRef}
           type="file"
           onChange={handleFileChange}
           className="hidden"
           accept="image/*,.pdf,.doc,.docx,.txt"
-        />
+        /> */}
 
         {/* Text Input */}
         <div className="flex-1 bg-slate-50 rounded-2xl border border-slate-100 focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-100 transition-all">
