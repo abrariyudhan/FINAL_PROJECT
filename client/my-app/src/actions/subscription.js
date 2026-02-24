@@ -32,15 +32,15 @@ export async function createFullSubscription(formData) {
     }
 
     const subData = {
-      serviceName: serviceName,
+      serviceName,
       logo: logoUrl,
       category: formData.get("category"),
-      billingDate: billingDate,
+      billingDate,
       pricePaid: Number(formData.get("pricePaid")),
-      reminderDate: reminderDate,
-      billingCycle: billingCycle,
-      type: type,
-      isReminderActive: isReminderActive,
+      reminderDate,
+      billingCycle,
+      type,
+      isReminderActive,
       userId: user.userId,
     }
 
@@ -68,8 +68,8 @@ export async function createFullSubscription(formData) {
           memberPromises.push(Member.create({
             subscriptionId: newSubId,
             name: memberNames[i],
-            email: email,
-            phone: phone,
+            email,
+            phone,
             userId: null,
           }))
         }
@@ -105,9 +105,7 @@ export async function createFullSubscription(formData) {
     return { error: errorHandler(error).message }
   }
 
-  if (isSuccess) {
-    redirect("/dashboard")
-  }
+  if (isSuccess) redirect("/dashboard")
 }
 
 export async function updateFullSubscription(formData) {
@@ -135,14 +133,14 @@ export async function updateFullSubscription(formData) {
     }
 
     const updatedData = {
-      serviceName: serviceName,
+      serviceName,
       logo: logoUrl,
       category: formData.get("category"),
-      billingDate: billingDate,
-      billingCycle: billingCycle,
+      billingDate,
+      billingCycle,
       pricePaid: Number(formData.get("pricePaid")),
-      reminderDate: reminderDate,
-      isReminderActive: isReminderActive,
+      reminderDate,
+      isReminderActive,
       type: formData.get("type"),
       userId: user.userId,
     }
@@ -169,6 +167,18 @@ export async function updateFullSubscription(formData) {
           throw new Error(`Member "${name}" must provide either an email address or a phone number.`);
         }
 
+    try {
+      if (!isReminderActive && existingSub.isReminderActive) {
+        await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
+      } else if (isReminderActive && !existingSub.isReminderActive) {
+        await inngest.send({ name: "app/subscription.reminder", data: { subId: id, reminderDate } })
+      } else if (isReminderActive && existingSub.reminderDate !== reminderDate) {
+        await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
+        await new Promise(resolve => setTimeout(resolve, 100))
+        await inngest.send({ name: "app/subscription.reminder", data: { subId: id, reminderDate } })
+      }
+    } catch (inngestError) {
+      console.error("Inngest event error (non-critical):", inngestError)
         if (mId && mId !== "") {
           memberUpdatePromises.push(Member.update(mId, {
             name: name,
@@ -238,9 +248,7 @@ export async function updateFullSubscription(formData) {
     return { error: errorHandler(error).message }
   }
 
-  if (isSuccess) {
-    redirect(`/dashboard/${id}`)
-  }
+  if (isSuccess) redirect(`/dashboard/${id}`)
 }
 
 export async function deleteSubscription(id) {
@@ -265,4 +273,87 @@ export async function deleteSubscription(id) {
     return { error: errorHandler(error).message }
   }
   redirect("/dashboard")
+}
+
+// Buat subscription dari GroupRequest yang sudah full
+export async function setupSubscriptionFromGroup(formData) {
+  let isSuccess = false
+
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { error: "Unauthorized" }
+
+    const groupRequestId = formData.get("groupRequestId")
+    const serviceName = formData.get("serviceName")
+    const billingDate = formData.get("billingDate")
+    const reminderDate = formData.get("reminderDate")
+    const billingCycle = Number(formData.get("billingCycle")) || 1
+    const pricePaid = Number(formData.get("pricePaid"))
+    const isReminderActive = formData.get("isReminderActive") === "on"
+    const membersData = JSON.parse(formData.get("membersData") || "[]")
+
+    if (new Date(reminderDate) > new Date(billingDate)) {
+      throw new Error("The reminder date must not be later than the billing date.")
+    }
+
+    const masterSvc = await MasterData.findByName(serviceName)
+    const logoUrl = masterSvc?.logo || ""
+
+    // Buat subscription bertipe Family
+    const subResult = await Subscription.create({
+      serviceName,
+      logo: logoUrl,
+      category: masterSvc?.category || "Other",
+      billingDate,
+      reminderDate,
+      billingCycle,
+      pricePaid,
+      type: "Family",
+      isReminderActive,
+      userId: user.userId,
+    })
+
+    const newSubId = subResult.insertedId.toString()
+
+    const { getDb } = await import("@/server/config/mongodb")
+    const { ObjectId } = await import("mongodb")
+    const db = await getDb()
+
+    // Update data member + link ke subscription baru
+    for (const m of membersData) {
+      await db.collection("members").updateOne(
+        { _id: new ObjectId(m.memberId) },
+        {
+          $set: {
+            subscriptionId: newSubId,
+            name: m.name,
+            email: m.email || "",
+            phone: m.phone || "",
+          }
+        }
+      )
+    }
+
+    // Update GroupRequest: simpan subscriptionId + tutup group
+    await db.collection("groupRequests").updateOne(
+      { _id: new ObjectId(groupRequestId) },
+      { $set: { subscriptionId: newSubId, status: "closed" } }
+    )
+
+    if (isReminderActive) {
+      await inngest.send({
+        name: "app/subscription.reminder",
+        data: { subId: newSubId, reminderDate },
+      })
+    }
+
+    revalidatePath("/dashboard")
+    revalidatePath(`/dashboard/group-requests/${groupRequestId}`)
+    isSuccess = true
+  } catch (error) {
+    console.log("SETUP ERROR:", error)
+    return { error: errorHandler(error).message }
+  }
+
+  if (isSuccess) redirect("/dashboard")
 }
