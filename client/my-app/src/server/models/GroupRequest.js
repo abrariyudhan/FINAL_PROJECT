@@ -8,22 +8,16 @@ export default class GroupRequest {
     return db.collection("groupRequests");
   }
 
-  // Ambil semua GroupRequest yang masih open (untuk halaman browse)
   static async getAllOpen() {
     const collection = await this.getCollection();
     return await collection.find({ status: "open" }).toArray();
   }
 
-  // Ambil semua GroupRequest (semua status: open, full, closed) — untuk explore
   static async getAll() {
     const collection = await this.getCollection();
-    return await collection
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
+    return await collection.find({}).sort({ createdAt: -1 }).toArray();
   }
 
-  // Ambil semua GroupRequest milik owner tertentu
   static async getByOwnerId(ownerId) {
     const collection = await this.getCollection();
     return await collection
@@ -32,7 +26,6 @@ export default class GroupRequest {
       .toArray();
   }
 
-  // Ambil satu GroupRequest by ID
   static async getById(id) {
     if (!id || id.length !== 24) throw new Error("Invalid GroupRequest ID");
     const collection = await this.getCollection();
@@ -41,36 +34,76 @@ export default class GroupRequest {
     return result;
   }
 
-  // Buat GroupRequest baru
+  // Buat GroupRequest baru — tidak perlu subscriptionId/serviceId lagi
   static async create(data) {
     const collection = await this.getCollection();
     return await collection.insertOne({
       ownerId: new ObjectId(data.ownerId),
-      serviceId: new ObjectId(data.serviceId),
+      serviceName: data.serviceName,
+      logo: data.logo || "",
       title: data.title,
       description: data.description || "",
       maxSlot: Number(data.maxSlot),
-      availableSlot: Number(data.maxSlot), // awalnya sama dengan maxSlot
-      status: "open", // open | closed | full
+      availableSlot: Number(data.maxSlot),
+      status: "open",
       createdAt: new Date(),
     });
   }
 
-  // Update availableSlot (kurangi 1 saat ada member yang approved)
-  static async decrementSlot(id) {
+  // Update GroupRequest (edit oleh owner)
+  static async update(id, ownerId, data) {
     const collection = await this.getCollection();
     const groupRequest = await this.getById(id);
 
+    // Hitung ulang availableSlot jika maxSlot berubah
+    const slotDiff = Number(data.maxSlot) - groupRequest.maxSlot;
+    const newAvailableSlot = Math.max(0, groupRequest.availableSlot + slotDiff);
+    const newStatus = newAvailableSlot <= 0
+      ? "full"
+      : groupRequest.status === "full"
+        ? "open"
+        : groupRequest.status;
+
+    return await collection.updateOne(
+      { _id: new ObjectId(id), ownerId: new ObjectId(ownerId) },
+      {
+        $set: {
+          serviceName: data.serviceName,
+          logo: data.logo || groupRequest.logo || "",
+          title: data.title,
+          description: data.description || "",
+          maxSlot: Number(data.maxSlot),
+          availableSlot: newAvailableSlot,
+          status: newStatus,
+          updatedAt: new Date(),
+        },
+      }
+    );
+  }
+
+  static async decrementSlot(id) {
+    const collection = await this.getCollection();
+    const groupRequest = await this.getById(id);
     const newSlot = groupRequest.availableSlot - 1;
     const newStatus = newSlot <= 0 ? "full" : "open";
-
     return await collection.updateOne(
       { _id: new ObjectId(id) },
       { $set: { availableSlot: newSlot, status: newStatus } }
     );
   }
 
-  // Tutup GroupRequest secara manual oleh owner
+  // Tambah slot kembali saat member dihapus
+  static async incrementSlot(id) {
+    const collection = await this.getCollection();
+    const groupRequest = await this.getById(id);
+    const newSlot = groupRequest.availableSlot + 1;
+    const newStatus = groupRequest.status === "full" ? "open" : groupRequest.status;
+    return await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { availableSlot: newSlot, status: newStatus } }
+    );
+  }
+
   static async close(id, ownerId) {
     const collection = await this.getCollection();
     return await collection.updateOne(
@@ -79,7 +112,6 @@ export default class GroupRequest {
     );
   }
 
-  // Hapus GroupRequest
   static async delete(id, ownerId) {
     const collection = await this.getCollection();
     return await collection.deleteOne({

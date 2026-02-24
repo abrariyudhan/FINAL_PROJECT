@@ -15,7 +15,6 @@ export async function createFullSubscription(formData) {
 
   try {
     const user = await getCurrentUser()
-    // Validasi jika user tidak ada
     if (!user) return { error: "Unauthorized" }
 
     const serviceName = formData.get("serviceName")
@@ -25,26 +24,23 @@ export async function createFullSubscription(formData) {
     const reminderDate = formData.get("reminderDate")
     const billingCycle = Number(formData.get("billingCycle")) || 1
 
-    // CARI LOGO DARI MASTER DATA
-    // Jika tidak ditemukan (karena input manual), logo akan menjadi string kosong
     const masterSvc = await MasterData.findByName(serviceName);
     const logoUrl = masterSvc ? masterSvc.logo : "";
 
-    // VALIDASI LOGIKA TANGGAL
     if (new Date(reminderDate) > new Date(billingDate)) {
       throw new Error("The reminder date must not be later than the billing date.")
     }
 
     const subData = {
-      serviceName: serviceName,
+      serviceName,
       logo: logoUrl,
       category: formData.get("category"),
-      billingDate: billingDate,
+      billingDate,
       pricePaid: Number(formData.get("pricePaid")),
-      reminderDate: reminderDate,
-      billingCycle: billingCycle,
-      type: type,
-      isReminderActive: isReminderActive,
+      reminderDate,
+      billingCycle,
+      type,
+      isReminderActive,
       userId: user.userId,
     }
 
@@ -61,7 +57,6 @@ export async function createFullSubscription(formData) {
           const email = memberEmails[i] || null
           const phone = memberPhones[i] || null
 
-          // VALIDASI KONTAK MEMBER
           if (!email && !phone) {
             throw new Error(`Member "${memberNames[i]}" must provide either an email address or a phone number.`)
           }
@@ -69,8 +64,8 @@ export async function createFullSubscription(formData) {
           await Member.create({
             subscriptionId: newSubId,
             name: memberNames[i],
-            email: email,
-            phone: phone,
+            email,
+            phone,
             userId: null,
           })
         }
@@ -93,9 +88,7 @@ export async function createFullSubscription(formData) {
     return { error: errorHandler(error).message }
   }
 
-  if (isSuccess) {
-    redirect("/dashboard")
-  }
+  if (isSuccess) redirect("/dashboard")
 }
 
 export async function updateFullSubscription(formData) {
@@ -115,32 +108,28 @@ export async function updateFullSubscription(formData) {
     const reminderDate = formData.get("reminderDate")
     const billingCycle = Number(formData.get("billingCycle")) || 1
 
-    // CARI LOGO TERBARU DARI MASTER DATA (Antisipasi jika user mengubah nama service)
     const masterSvc = await MasterData.findByName(serviceName)
     const logoUrl = masterSvc ? masterSvc.logo : ""
 
-    // VALIDASI LOGIKA TANGGAL
     if (new Date(reminderDate) > new Date(billingDate)) {
       throw new Error("The reminder date must not be later than the billing date.")
     }
 
     const updatedData = {
-      serviceName: serviceName,
+      serviceName,
       logo: logoUrl,
       category: formData.get("category"),
-      billingDate: billingDate,
-      billingCycle: billingCycle,
+      billingDate,
+      billingCycle,
       pricePaid: Number(formData.get("pricePaid")),
-      reminderDate: reminderDate,
-      isReminderActive: isReminderActive,
+      reminderDate,
+      isReminderActive,
       type: formData.get("type"),
       userId: user.userId,
     }
 
-    // Update data utama subscription
     await Subscription.update(id, user.userId, updatedData)
 
-    // Update/Tambah member baru jika ada
     const memberNames = formData.getAll("memberName[]")
     const memberEmails = formData.getAll("memberEmail[]")
     const memberPhones = formData.getAll("memberPhone[]")
@@ -157,53 +146,24 @@ export async function updateFullSubscription(formData) {
         await Member.create({
           subscriptionId: id,
           name: memberNames[i],
-          email: email,
-          phone: phone,
+          email,
+          phone,
           userId: null,
         })
       }
     }
 
-    // HANDLE INNGEST EVENTS - Setelah semua update berhasil
     try {
-      // Jika user matikan reminder DAN sebelumnya aktif
       if (!isReminderActive && existingSub.isReminderActive) {
-        await inngest.send({
-          name: "app/subscription.reminder.cancel",
-          data: { subId: id }
-        })
-      } 
-      // Jika user nyalakan reminder DAN sebelumnya mati
-      else if (isReminderActive && !existingSub.isReminderActive) {
-        await inngest.send({
-          name: "app/subscription.reminder",
-          data: {
-            subId: id,
-            reminderDate: reminderDate,
-          },
-        })
-      }
-      // Jika reminder tetap aktif tapi tanggal berubah
-      else if (isReminderActive && existingSub.reminderDate !== reminderDate) {
-        // Cancel dulu, baru schedule ulang
-        await inngest.send({
-          name: "app/subscription.reminder.cancel",
-          data: { subId: id }
-        })
-        
-        // Kasih delay kecil
+        await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
+      } else if (isReminderActive && !existingSub.isReminderActive) {
+        await inngest.send({ name: "app/subscription.reminder", data: { subId: id, reminderDate } })
+      } else if (isReminderActive && existingSub.reminderDate !== reminderDate) {
+        await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
         await new Promise(resolve => setTimeout(resolve, 100))
-        
-        await inngest.send({
-          name: "app/subscription.reminder",
-          data: {
-            subId: id,
-            reminderDate: reminderDate,
-          },
-        })
+        await inngest.send({ name: "app/subscription.reminder", data: { subId: id, reminderDate } })
       }
-      } catch (inngestError) {
-      // Log error tapi jangan fail keseluruhan update
+    } catch (inngestError) {
       console.error("Inngest event error (non-critical):", inngestError)
     }
 
@@ -214,9 +174,7 @@ export async function updateFullSubscription(formData) {
     return { error: errorHandler(error).message }
   }
 
-  if (isSuccess) {
-    redirect(`/dashboard/${id}`)
-  }
+  if (isSuccess) redirect(`/dashboard/${id}`)
 }
 
 export async function deleteSubscription(id) {
@@ -224,14 +182,10 @@ export async function deleteSubscription(id) {
     const user = await getCurrentUser()
     if (!user.userId) throw new Error("Unauthorized")
 
-    // Pastikan user memiliki akses ke subscription ini
     const sub = await Subscription.getByUserAndId(user.userId, id)
     if (!sub) throw new Error("Subscription not found or access denied")
 
-    // Bersihkan semua member terkait
     await Member.deleteBySubscriptionId(id, user.userId)
-
-    // Hapus data utama
     await Subscription.delete(id, user.userId)
 
     revalidatePath("/dashboard")
@@ -239,4 +193,87 @@ export async function deleteSubscription(id) {
     return { error: errorHandler(error).message }
   }
   redirect("/dashboard")
+}
+
+// Buat subscription dari GroupRequest yang sudah full
+export async function setupSubscriptionFromGroup(formData) {
+  let isSuccess = false
+
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { error: "Unauthorized" }
+
+    const groupRequestId = formData.get("groupRequestId")
+    const serviceName = formData.get("serviceName")
+    const billingDate = formData.get("billingDate")
+    const reminderDate = formData.get("reminderDate")
+    const billingCycle = Number(formData.get("billingCycle")) || 1
+    const pricePaid = Number(formData.get("pricePaid"))
+    const isReminderActive = formData.get("isReminderActive") === "on"
+    const membersData = JSON.parse(formData.get("membersData") || "[]")
+
+    if (new Date(reminderDate) > new Date(billingDate)) {
+      throw new Error("The reminder date must not be later than the billing date.")
+    }
+
+    const masterSvc = await MasterData.findByName(serviceName)
+    const logoUrl = masterSvc?.logo || ""
+
+    // Buat subscription bertipe Family
+    const subResult = await Subscription.create({
+      serviceName,
+      logo: logoUrl,
+      category: masterSvc?.category || "Other",
+      billingDate,
+      reminderDate,
+      billingCycle,
+      pricePaid,
+      type: "Family",
+      isReminderActive,
+      userId: user.userId,
+    })
+
+    const newSubId = subResult.insertedId.toString()
+
+    const { getDb } = await import("@/server/config/mongodb")
+    const { ObjectId } = await import("mongodb")
+    const db = await getDb()
+
+    // Update data member + link ke subscription baru
+    for (const m of membersData) {
+      await db.collection("members").updateOne(
+        { _id: new ObjectId(m.memberId) },
+        {
+          $set: {
+            subscriptionId: newSubId,
+            name: m.name,
+            email: m.email || "",
+            phone: m.phone || "",
+          }
+        }
+      )
+    }
+
+    // Update GroupRequest: simpan subscriptionId + tutup group
+    await db.collection("groupRequests").updateOne(
+      { _id: new ObjectId(groupRequestId) },
+      { $set: { subscriptionId: newSubId, status: "closed" } }
+    )
+
+    if (isReminderActive) {
+      await inngest.send({
+        name: "app/subscription.reminder",
+        data: { subId: newSubId, reminderDate },
+      })
+    }
+
+    revalidatePath("/dashboard")
+    revalidatePath(`/dashboard/group-requests/${groupRequestId}`)
+    isSuccess = true
+  } catch (error) {
+    console.log("SETUP ERROR:", error)
+    return { error: errorHandler(error).message }
+  }
+
+  if (isSuccess) redirect("/dashboard")
 }

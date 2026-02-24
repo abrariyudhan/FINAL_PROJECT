@@ -1,5 +1,4 @@
-import GroupRequest from "@/server/models/GroupRequest";
-import MemberRequest from "@/server/models/MemberRequest";
+import MasterData from "@/server/models/MasterData";
 import { getCurrentUser } from "@/actions/auth";
 import { redirect } from "next/navigation";
 import ManageGroupRequestClient from "@/components/ManageGroupRequestClient";
@@ -10,7 +9,6 @@ export default async function ManageGroupRequestPage({ params }) {
   if (!user) redirect("/login")
 
   try {
-    // Ambil data GroupRequest (pakai getById sederhana tanpa aggregate dulu)
     const { getDb } = await import("@/server/config/mongodb")
     const { ObjectId } = await import("mongodb")
     const db = await getDb()
@@ -19,43 +17,43 @@ export default async function ManageGroupRequestPage({ params }) {
       _id: new ObjectId(id)
     })
 
-    if (!groupRequest) redirect("/dashboard/explore")
+    if (!groupRequest) redirect("/dashboard/group-requests")
 
-    // Pastikan hanya owner yang bisa akses halaman ini
     if (groupRequest.ownerId.toString() !== user.userId) {
       redirect("/dashboard/explore")
     }
 
-    // Ambil semua MemberRequest untuk GroupRequest ini
-    const memberRequests = await db.collection("memberRequests")
-      .aggregate([
-        { $match: { groupRequestId: new ObjectId(id) } },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user"
-          }
-        },
-        { $unwind: "$user" },
-        { $sort: { createdAt: -1 } }
-      ])
+    // Ambil MemberRequest lalu enrich dengan data user secara manual
+    // (hindari aggregate $unwind yang bisa error jika userId tidak match)
+    const rawMemberRequests = await db.collection("memberRequests")
+      .find({ groupRequestId: new ObjectId(id) })
+      .sort({ createdAt: -1 })
       .toArray()
 
-    // Ambil info service
-    const service = groupRequest.serviceId
-      ? await db.collection("services").findOne({ _id: groupRequest.serviceId })
-      : null
+    const memberRequests = await Promise.all(
+      rawMemberRequests.map(async (req) => {
+        const userData = req.userId
+          ? await db.collection("users").findOne(
+              { _id: new ObjectId(req.userId.toString()) },
+              { projection: { fullname: 1, username: 1, email: 1 } }
+            )
+          : null
+        return { ...req, userData }
+      })
+    )
+
+    // Ambil master services untuk edit modal
+    const services = await MasterData.findAll()
 
     return (
       <ManageGroupRequestClient
         groupRequest={JSON.parse(JSON.stringify(groupRequest))}
         memberRequests={JSON.parse(JSON.stringify(memberRequests))}
-        service={JSON.parse(JSON.stringify(service))}
+        services={JSON.parse(JSON.stringify(services))}
       />
     )
   } catch (error) {
-    redirect("/dashboard/explore")
+    console.error("ManageGroupRequestPage error:", error)
+    redirect("/dashboard/group-requests")
   }
 }

@@ -264,7 +264,7 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
             {/* Section: Inactive */}
             {inactiveGroups.length > 0 && (
               <div>
-                <SectionHeader title="Inactive Groups" count={inactiveGroups.length} active={false} />
+                <SectionHeader title="Closed Groups" count={inactiveGroups.length} active={false} />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {inactiveGroups.map((gr) => (
                     <GroupRequestCard
