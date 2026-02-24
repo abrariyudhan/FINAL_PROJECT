@@ -19,88 +19,137 @@ export default async function DashboardPage() {
       label: "Monthly Spend",
       value: `Rp ${totalMonthly.toLocaleString("id-ID")}`,
       textColor: "text-slate-900",
-      bgColor: "bg-white",
-      accent: "bg-sky-500"
+      bgGradient: "from-blue-50 to-cyan-50",
+      icon: "💰",
+      accentColor: "bg-gradient-to-r from-blue-500 to-cyan-400"
     },
     {
       label: "Active Subs",
       value: subscriptions.length,
       textColor: "text-slate-900",
-      bgColor: "bg-white",
-      accent: "bg-emerald-400"
+      bgGradient: "from-purple-50 to-pink-50",
+      icon: "📊",
+      accentColor: "bg-gradient-to-r from-purple-500 to-pink-400"
     },
     {
       label: "Next Renewal",
       value: subscriptions[0]?.serviceName || "-",
       textColor: "text-slate-900",
-      bgColor: "bg-white",
-      accent: "bg-violet-400"
+      bgGradient: "from-emerald-50 to-teal-50",
+      icon: "🔔",
+      accentColor: "bg-gradient-to-r from-emerald-500 to-teal-400"
     },
   ]
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 md:p-12 font-sans text-slate-900">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 md:p-12 font-sans text-slate-900">
+      <div className="max-w-7xl mx-auto">
 
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div className="space-y-1">
-              <img
-                src="https://i.ibb.co.com/1tJPNJP7/Sub-Track8-cropped-removebg.png"
-                alt="SubTrack8 Logo"
-                className="w-48 md:w-64 lg:w-72 h-auto"
-              />
-            <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em]">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 bg-white rounded-3xl p-6 md:p-8 shadow-xl shadow-blue-100/50 border border-blue-100">
+          <div className="space-y-2">
+            <img
+              src="https://i.ibb.co.com/1tJPNJP7/Sub-Track8-cropped-removebg.png"
+              alt="SubTrack8 Logo"
+              className="w-48 md:w-56 lg:w-64 h-auto"
+            />
+            <p className="text-xs text-slate-500 font-semibold flex items-center gap-2">
+              <span className="w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full animate-pulse"></span>
               Managing {subscriptions.length} Active Services
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             {user && (
-              <span className="text-sm font-bold text-slate-500 hidden md:block">
-                Hi, {user.fullname || user.username}
-              </span>
+              <div className="hidden md:block bg-gradient-to-r from-blue-50 to-cyan-50 px-6 py-3 rounded-2xl border border-blue-100">
+                <p className="text-xs text-slate-500 font-medium">Welcome back,</p>
+                <p className="text-sm font-bold text-slate-900">{user.fullname || user.username}</p>
+              </div>
             )}
-            <Link href="/dashboard/add-subscription" className="hidden md:flex bg-slate-900 hover:bg-sky-500 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 items-center gap-3 active:scale-95">
-              <span className="text-lg leading-none">+</span> Add Subscription
+            <Link 
+              href="/dashboard/add-subscription" 
+              className="hidden md:flex bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-8 py-4 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-blue-200 items-center gap-2 active:scale-95"
+            >
+              <span className="text-xl leading-none">+</span> 
+              <span>Add Subscription</span>
             </Link>
             <LogoutButton />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-12">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {statsConfig.map((stat, i) => (
-            <div key={i} className={`${stat.bgColor} p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] relative overflow-hidden group transition-all hover:shadow-lg`}>
+            <div 
+              key={i} 
+              className={`bg-gradient-to-br ${stat.bgGradient} p-8 rounded-3xl border border-white/50 shadow-xl shadow-slate-200/50 relative overflow-hidden group transition-all hover:scale-105 hover:shadow-2xl`}
+            >
+              {/* Decorative Elements */}
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/30 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+              <div className={`absolute bottom-0 left-0 w-full h-1 ${stat.accentColor}`}></div>
 
-              <div className={`absolute top-0 left-0 w-1.5 h-full ${stat.accent} opacity-20 group-hover:opacity-100 transition-opacity`}></div>
+              {/* Icon */}
+              <div className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                {stat.icon}
+              </div>
 
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-3">{stat.label}</p>
-              <h2 className={`text-lg md:text-xl font-black ${stat.textColor} tracking-tighter`}>{stat.value}</h2>
+              {/* Content */}
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                {stat.label}
+              </p>
+              <h2 className={`text-3xl font-black ${stat.textColor} tracking-tight`}>
+                {stat.value}
+              </h2>
+
+              {/* Hover Effect Bar */}
+              <div className={`absolute top-0 right-0 w-1 h-0 ${stat.accentColor} group-hover:h-full transition-all duration-300`}></div>
             </div>
           ))}
         </div>
 
+        {/* Mobile Action Buttons */}
         <div className="mb-10 md:hidden space-y-3">
-          <Link href="/dashboard/explore" className="bg-white text-slate-900 px-6 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-slate-200 flex items-center gap-3 w-full justify-center active:scale-95 transition-all border border-slate-100">
-            <span className="text-lg">🔍</span> Explore Groups
+          <Link 
+            href="/dashboard/explore" 
+            className="bg-white hover:bg-blue-50 text-slate-900 px-6 py-5 rounded-2xl font-bold text-sm shadow-lg shadow-slate-200 flex items-center gap-3 w-full justify-center active:scale-95 transition-all border border-slate-200"
+          >
+            <span className="text-2xl">🔍</span> 
+            <span>Explore Groups</span>
           </Link>
-          <Link href="/dashboard/add-subscription" className="bg-slate-900 text-white px-6 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-slate-300 flex items-center gap-3 w-full justify-center active:scale-95 transition-all">
-            <span className="text-lg">+</span> Add Subscription
+          <Link 
+            href="/dashboard/add-subscription" 
+            className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-6 py-5 rounded-2xl font-bold text-sm shadow-xl shadow-blue-200 flex items-center gap-3 w-full justify-center active:scale-95 transition-all"
+          >
+            <span className="text-2xl">+</span> 
+            <span>Add Subscription</span>
           </Link>
         </div>
 
+        {/* Subscription List Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between px-2">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Subscription List</h2>
-            <div className="h-px flex-1 bg-slate-100 mx-6 hidden md:block"></div>
-            <Link href="/dashboard/explore" className="hidden md:flex bg-white hover:bg-sky-50 text-slate-900 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-slate-200 items-center gap-3 active:scale-95 border border-slate-100">
-              <span className="text-lg leading-none">🔍</span> Explore Groups
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center text-white text-lg shadow-lg">
+                📋
+              </div>
+              <h2 className="text-lg font-black text-slate-800">Your Subscriptions</h2>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-6 hidden md:block"></div>
+            <Link 
+              href="/dashboard/explore" 
+              className="hidden md:flex bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 text-slate-900 px-8 py-4 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-slate-200 items-center gap-3 active:scale-95 border border-slate-200"
+            >
+              <span className="text-xl leading-none">🔍</span> 
+              <span>Explore Groups</span>
             </Link>
           </div>
 
-          <div className="hidden md:block">
+          {/* Desktop Table */}
+          <div className="hidden md:block bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
             <SubTable subscriptions={subscriptions} today={today} />
           </div>
 
+          {/* Mobile Cards */}
           <div className="grid grid-cols-1 gap-6 md:hidden">
             {subscriptions.map((sub) => (
               <SubCard key={sub._id.toString()} sub={sub} />
@@ -108,13 +157,23 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* Empty State */}
         {subscriptions.length === 0 && (
-          <div className="text-center py-32 bg-white rounded-[3.5rem] border-2 border-dashed border-slate-100">
-            <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6 transform rotate-12">
-              <span className="text-3xl text-slate-200 font-black">?</span>
+          <div className="text-center py-32 bg-white rounded-[3rem] border-2 border-dashed border-blue-200 shadow-xl shadow-blue-100/50">
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <span className="text-5xl">📭</span>
             </div>
-            <h3 className="text-slate-900 font-black text-lg mb-1">No Data Found</h3>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Your dashboard is looking a bit empty.</p>
+            <h3 className="text-slate-900 font-black text-2xl mb-3">No Subscriptions Yet</h3>
+            <p className="text-slate-500 text-sm mb-6 max-w-md mx-auto">
+              Start adding your subscriptions to track your expenses and never miss a payment!
+            </p>
+            <Link 
+              href="/dashboard/add-subscription"
+              className="inline-flex bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white px-8 py-4 rounded-2xl font-bold text-sm shadow-xl shadow-blue-200 items-center gap-2 transition-all active:scale-95"
+            >
+              <span className="text-xl">+</span>
+              <span>Add Your First Subscription</span>
+            </Link>
           </div>
         )}
 
