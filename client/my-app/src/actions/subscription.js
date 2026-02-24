@@ -74,7 +74,7 @@ export async function createFullSubscription(formData) {
           }))
         }
       }
-      
+
       // PASTIKAN SEMUA MEMBER SELESAI DISIMPAN SEBELUM LANJUT
       if (memberPromises.length > 0) {
         await Promise.all(memberPromises)
@@ -133,18 +133,17 @@ export async function updateFullSubscription(formData) {
     }
 
     const updatedData = {
-      serviceName,
+      serviceName: serviceName,
       logo: logoUrl,
       category: formData.get("category"),
-      billingDate,
-      billingCycle,
+      billingDate: billingDate,
+      billingCycle: billingCycle,
       pricePaid: Number(formData.get("pricePaid")),
-      reminderDate,
-      isReminderActive,
+      reminderDate: reminderDate,
+      isReminderActive: isReminderActive,
       type: formData.get("type"),
       userId: user.userId,
     }
-
 
     // Update data utama
     await Subscription.update(id, user.userId, updatedData)
@@ -168,18 +167,6 @@ export async function updateFullSubscription(formData) {
           throw new Error(`Member "${name}" must provide either an email address or a phone number.`);
         }
 
-    try {
-      if (!isReminderActive && existingSub.isReminderActive) {
-        await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
-      } else if (isReminderActive && !existingSub.isReminderActive) {
-        await inngest.send({ name: "app/subscription.reminder", data: { subId: id, reminderDate } })
-      } else if (isReminderActive && existingSub.reminderDate !== reminderDate) {
-        await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
-        await new Promise(resolve => setTimeout(resolve, 100))
-        await inngest.send({ name: "app/subscription.reminder", data: { subId: id, reminderDate } })
-      }
-    } catch (inngestError) {
-      console.error("Inngest event error (non-critical):", inngestError)
         if (mId && mId !== "") {
           memberUpdatePromises.push(Member.update(mId, {
             name: name,
@@ -249,7 +236,9 @@ export async function updateFullSubscription(formData) {
     return { error: errorHandler(error).message }
   }
 
-  if (isSuccess) redirect(`/dashboard/${id}`)
+  if (isSuccess) {
+    redirect(`/dashboard/${id}`)
+  }
 }
 
 export async function deleteSubscription(id) {
