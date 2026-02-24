@@ -38,10 +38,14 @@ export default function MessageInput({ onSendMessage, onUploadFile }) {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Call upload handler passed from parent
+      console.log("📤 Uploading file to Cloudinary...");
+
+      // Call upload handler passed from parent (server action)
       const result = await onUploadFile(formData);
 
       if (result.success) {
+        console.log("✅ File uploaded successfully:", result.fileUrl);
+
         // Determine file type
         const fileType = file.type.startsWith("image/") ? "image" : "file";
 
@@ -54,9 +58,12 @@ export default function MessageInput({ onSendMessage, onUploadFile }) {
           fileName: result.fileName,
         });
         setMessage("");
+      } else {
+        console.error("❌ Upload failed:", result.error);
+        alert(`Failed to upload file: ${result.error}`);
       }
     } catch (error) {
-      console.error("File upload error:", error);
+      console.error("❌ File upload error:", error);
       alert("Failed to upload file. Please try again.");
     } finally {
       setIsUploading(false);
@@ -71,7 +78,7 @@ export default function MessageInput({ onSendMessage, onUploadFile }) {
     <div className="border-t border-slate-100 p-4 bg-white">
       <div className="flex items-end gap-3">
         {/* Upload File Button */}
-        {/* <button
+        <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
           className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
@@ -115,16 +122,16 @@ export default function MessageInput({ onSendMessage, onUploadFile }) {
               />
             </svg>
           )}
-        </button> */}
+        </button>
 
         {/* Hidden file input */}
-        {/* <input
+        <input
           ref={fileInputRef}
           type="file"
           onChange={handleFileChange}
           className="hidden"
           accept="image/*,.pdf,.doc,.docx,.txt"
-        /> */}
+        />
 
         {/* Text Input */}
         <div className="flex-1 bg-slate-50 rounded-2xl border border-slate-100 focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-100 transition-all">
