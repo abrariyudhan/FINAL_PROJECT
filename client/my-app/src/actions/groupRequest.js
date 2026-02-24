@@ -3,6 +3,8 @@
 import GroupRequest from "@/server/models/GroupRequest";
 import MemberRequest from "@/server/models/MemberRequest";
 import Member from "@/server/models/Member";
+import Group from "@/server/models/Group";
+import Chat from "@/server/models/Chat";
 import MasterData from "@/server/models/MasterData";
 import { getCurrentUser } from "@/actions/auth";
 import { revalidatePath } from "next/cache";
@@ -239,10 +241,14 @@ export async function approveMemberRequest(memberRequestId) {
       phone: requestUser?.phoneNumber || "",
     });
 
-    // Group & Chat akan dibuat setelah owner setup subscription
-    // (tidak lagi otomatis saat full)
+    // ✅ TAMBAHKAN INI: Cek jika GroupRequest sudah full, create Group & Chat otomatis
+    const updatedGroupReq = await GroupRequest.getById(memberReq.groupRequestId.toString());
+    if (updatedGroupReq.status === "full") {
+      await createGroupFromRequest(memberReq.groupRequestId.toString());
+    }
 
     revalidatePath(`/dashboard/group-requests/${memberReq.groupRequestId}`);
+    revalidatePath("/chat"); // ✅ Tambahkan revalidate chat
     return { success: true };
   } catch (error) {
     return { error: error.message || "Failed to approve request" };
@@ -271,5 +277,47 @@ export async function rejectMemberRequest(memberRequestId) {
     return { success: true };
   } catch (error) {
     return { error: error.message || "Failed to reject request" };
+  }
+}
+
+// ============================================================
+// AUTO CREATE GROUP & CHAT WHEN FULL
+// ============================================================
+
+async function createGroupFromRequest(groupRequestId) {
+  try {
+    const groupReq = await GroupRequest.getById(groupRequestId);
+
+    // Ambil semua members yang sudah approved
+    const members = await Member.getByGroupRequestId(groupRequestId);
+    const memberIds = members.map((m) => m.userId.toString());
+
+    // Include owner juga sebagai member
+    const ownerIdString = groupReq.ownerId.toString();
+    if (!memberIds.includes(ownerIdString)) {
+      memberIds.push(ownerIdString);
+    }
+
+    // Create Group
+    const groupResult = await Group.create({
+      name: groupReq.title,
+      description: groupReq.description || `Group for ${groupReq.title}`,
+      members: memberIds,
+      groupRequestId: groupRequestId,
+    });
+
+    const groupId = groupResult.insertedId.toString();
+
+    // Create Chat untuk group
+    await Chat.create({
+      participants: memberIds,
+      type: "group",
+      groupId: groupId,
+    });
+
+    return { success: true, groupId };
+  } catch (error) {
+    console.error("Error creating group:", error);
+    return { success: false, error: error.message };
   }
 }
