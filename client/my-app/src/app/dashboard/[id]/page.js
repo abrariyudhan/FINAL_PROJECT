@@ -13,7 +13,26 @@ export default async function SubscriptionDetailPage({ params }) {
   }
   
   try {
-    const sub = await Subscription.getByUserAndId(user.userId, id)
+    const { getDb } = await import("@/server/config/mongodb")
+    const { ObjectId } = await import("mongodb")
+    const db = await getDb()
+
+    // Coba akses sebagai owner dulu
+    let sub = null
+    let isOwner = true
+    try {
+      sub = await Subscription.getByUserAndId(user.userId, id)
+    } catch {
+      // Bukan owner — cek apakah user adalah member dari subscription ini
+      isOwner = false
+      const memberDoc = await db.collection("members").findOne({
+        subscriptionId: id,
+        userId: user.userId
+      })
+      if (!memberDoc) redirect("/dashboard")
+      sub = await Subscription.getById(id)
+    }
+
     const members = await Member.getBySubscriptionId(id)
 
     // LOGIKA PERHITUNGAN
@@ -35,13 +54,15 @@ export default async function SubscriptionDetailPage({ params }) {
                 <span className="block text-[10px] text-slate-400">View all subscriptions</span>
               </div>
             </Link>
-            <Link
-              href={`/dashboard/${id}/edit`}
-              className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 px-8 py-4 rounded-2xl text-xs font-bold uppercase tracking-wider text-white transition-all shadow-xl shadow-blue-200 active:scale-95 flex items-center gap-2"
-            >
-              <span className="text-lg">✏️</span>
-              <span>Edit Details</span>
-            </Link>
+            {isOwner && (
+              <Link
+                href={`/dashboard/${id}/edit`}
+                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 px-8 py-4 rounded-2xl text-xs font-bold uppercase tracking-wider text-white transition-all shadow-xl shadow-blue-200 active:scale-95 flex items-center gap-2"
+              >
+                <span className="text-lg">✏️</span>
+                <span>Edit Details</span>
+              </Link>
+            )}
           </div>
 
           {/* Main Card */}
