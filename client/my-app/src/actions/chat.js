@@ -99,24 +99,59 @@ export async function createConversation(participantIds) {
   }
 }
 
-// Handle file upload (placeholder - you may need to implement actual file storage)
+// Handle file upload to Cloudinary
 export async function uploadFile(formData) {
   try {
-    // TODO: Implement actual file upload to storage service (e.g., AWS S3, Cloudinary)
-    // For now, returning a placeholder URL
-    const file = formData.get("file");
-    const fileName = file.name;
+    // Dynamic import for cloudinary
+    const { v2: cloudinary } = await import("cloudinary");
 
-    // Placeholder: In production, upload to cloud storage and get actual URL
-    const fileUrl = `/uploads/${Date.now()}-${fileName}`;
+    // Configure Cloudinary
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
+    const file = formData.get("file");
+    if (!file) {
+      throw new Error("No file provided");
+    }
+
+    const fileName = file.name;
+    const fileBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(fileBuffer);
+
+    console.log("📤 Uploading to Cloudinary:", fileName);
+
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "chat-uploads",
+          resource_type: "auto",
+          public_id: `chat-${Date.now()}-${fileName.split(".")[0]}`,
+        },
+        (error, result) => {
+          if (error) {
+            console.error("❌ Cloudinary upload error:", error);
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        },
+      );
+      uploadStream.end(buffer);
+    });
+
+    console.log("✅ File uploaded to Cloudinary:", result.secure_url);
 
     return {
       success: true,
-      fileUrl,
-      fileName,
+      fileUrl: result.secure_url,
+      fileName: fileName,
     };
   } catch (error) {
-    console.error("Error uploading file:", error);
+    console.error("❌ Error uploading file to Cloudinary:", error);
     return { success: false, error: error.message };
   }
 }

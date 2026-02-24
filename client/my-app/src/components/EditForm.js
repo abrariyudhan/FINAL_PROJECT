@@ -24,7 +24,7 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
     <form action={updateFullSubscription} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
       <input type="hidden" name="id" value={initialSub._id} />
       <input type="hidden" name="type" value={initialSub.type} />
-      
+
       {isMaster && (
         <>
           <input type="hidden" name="serviceName" value={initialSub.serviceName} />
@@ -38,7 +38,7 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center gap-5 group">
-                
+
                 <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center overflow-hidden border border-slate-100 shadow-sm shrink-0 transition-transform group-hover:rotate-3">
                   {initialSub.logo ? (
                     <img src={initialSub.logo} alt="" className="w-full h-full object-contain p-3" />
@@ -46,31 +46,30 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
                     <span className="text-xl font-black text-slate-300">{initialSub.serviceName.charAt(0)}</span>
                   )}
                 </div>
-                
+
                 <div className="flex-1">
                   <label className={labelStyles}>Service Name</label>
-                  <input 
+                  <input
                     name={isMaster ? "" : "serviceName"}
-                    defaultValue={initialSub.serviceName} 
-                    className={`w-full text-2xl font-black bg-transparent border-b-2 outline-none transition-all pb-2 ${
-                      isMaster 
-                      ? "border-transparent text-slate-400 cursor-not-allowed" 
+                    defaultValue={initialSub.serviceName}
+                    className={`w-full text-2xl font-black bg-transparent border-b-2 outline-none transition-all pb-2 ${isMaster
+                      ? "border-transparent text-slate-400 cursor-not-allowed"
                       : "border-slate-100 text-slate-900 focus:border-sky-400"
-                    }`} 
-                    required 
+                      }`}
+                    required
                     readOnly={isMaster}
                   />
                   {isMaster && <p className="text-[8px] font-black text-sky-500/50 uppercase tracking-[0.2em] mt-1">Verified Official Service</p>}
                 </div>
               </div>
             </div>
-            
+
             <div>
               <label className={labelStyles}>Category</label>
-              <select 
-                name={isMaster ? "" : "category"} 
-                defaultValue={initialSub.category} 
-                className={`${inputStyles} ${isMaster ? "opacity-60 cursor-not-allowed bg-slate-100 italic" : ""}`} 
+              <select
+                name={isMaster ? "" : "category"}
+                defaultValue={initialSub.category}
+                className={`${inputStyles} ${isMaster ? "opacity-60 cursor-not-allowed bg-slate-100 italic" : ""}`}
                 required
                 disabled={isMaster}
               >
@@ -132,18 +131,43 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {initialMembers.map((m) => (
-                    <div key={m._id} className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-2xl hover:border-rose-100 transition-all group">
-                      <div className="min-w-0">
-                        <p className="text-sm font-black text-slate-700 truncate">{m.name}</p>
-                        <p className="text-[10px] text-slate-400 font-bold truncate uppercase tracking-tight">{m.email || m.phone || 'No Contact'}</p>
-                      </div>
+                    <div key={m._id} className="relative flex flex-col p-5 bg-slate-50/50 border border-slate-100 rounded-[2rem] hover:border-sky-200 transition-all group">
+                      {/* Hidden ID agar server tahu ini UPDATE bukan CREATE */}
+                      <input type="hidden" name="memberId[]" value={m._id.toString()} />
+                      
                       <button
                         type="button"
                         onClick={async () => { if (confirm(`Remove ${m.name}?`)) await deleteMember(m._id, initialSub._id); }}
-                        className="p-2 text-slate-300 hover:text-rose-500 transition-colors"
+                        className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors z-10"
                       >
                         ✕
                       </button>
+
+                      <div className="space-y-3 pr-6">
+                        <div>
+                          <input 
+                            name="memberName[]" 
+                            defaultValue={m.name} 
+                            placeholder="Name"
+                            className="w-full bg-transparent border-none p-0 text-sm font-black text-slate-700 focus:ring-0 placeholder:text-slate-300"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <input 
+                            name="memberEmail[]" 
+                            defaultValue={m.email || ""} 
+                            placeholder="Email Address"
+                            className="w-full bg-transparent border-none p-0 text-[10px] text-slate-400 font-bold focus:ring-0 uppercase tracking-tight placeholder:text-slate-200"
+                          />
+                          <input 
+                            name="memberPhone[]" 
+                            defaultValue={m.phone || ""} 
+                            placeholder="Phone Number"
+                            className="w-full bg-transparent border-none p-0 text-[10px] text-slate-400 font-bold focus:ring-0 uppercase tracking-tight placeholder:text-slate-200"
+                          />
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -157,6 +181,7 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
                 <div className="space-y-3">
                   {newMembers.map((m) => (
                     <div key={m.id} className="grid grid-cols-1 md:grid-cols-10 gap-3 p-4 bg-white rounded-2xl border-2 border-dashed border-slate-100 items-center animate-in zoom-in-95">
+                      <input type="hidden" name="memberId[]" value="" />
                       <div className="md:col-span-3">
                         <input name="memberName[]" placeholder="Name" className={inputStyles + " p-2.5"} required />
                       </div>

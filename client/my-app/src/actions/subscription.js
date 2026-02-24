@@ -44,13 +44,17 @@ export async function createFullSubscription(formData) {
       userId: user.userId,
     }
 
+    // 1. Simpan Subscription Utama
     const subResult = await Subscription.create(subData)
     newSubId = subResult.insertedId.toString()
 
+    // 2. Simpan Members (jika tipe Family)
     if (type === "Family") {
       const memberNames = formData.getAll("memberName[]")
       const memberEmails = formData.getAll("memberEmail[]")
       const memberPhones = formData.getAll("memberPhone[]")
+
+      const memberPromises = []
 
       for (let i = 0; i < memberNames.length; i++) {
         if (memberNames[i]) {
@@ -61,22 +65,35 @@ export async function createFullSubscription(formData) {
             throw new Error(`Member "${memberNames[i]}" must provide either an email address or a phone number.`)
           }
 
-          await Member.create({
+          memberPromises.push(Member.create({
             subscriptionId: newSubId,
             name: memberNames[i],
             email,
             phone,
             userId: null,
-          })
+          }))
         }
+      }
+      
+      // PASTIKAN SEMUA MEMBER SELESAI DISIMPAN SEBELUM LANJUT
+      if (memberPromises.length > 0) {
+        await Promise.all(memberPromises)
       }
     }
 
+    // 3. KIRIM EVENT KE INNGEST (SETELAH SEMUA DATA DB SIAP)
+    // Kirim event Welcome/Invitation ke Owner dan Member
+    await inngest.send({
+      name: "app/subscription.created",
+      data: { subId: newSubId }
+    })
+
+    // Kirim event Reminder jika aktif
     if (subData.isReminderActive) {
       await inngest.send({
         name: "app/subscription.reminder",
         data: {
-          subId: subResult.insertedId.toString(),
+          subId: newSubId,
           reminderDate: subData.reminderDate,
         },
       })
@@ -128,21 +145,34 @@ export async function updateFullSubscription(formData) {
       userId: user.userId,
     }
 
+<<<<<<< HEAD
     await Subscription.update(id, user.userId, updatedData)
 
+=======
+    // Update data utama
+    await Subscription.update(id, user.userId, updatedData)
+
+    // Handle Update/Tambah Member
+    const memberIds = formData.getAll("memberId[]")
+>>>>>>> fb2667c4018cf7b46f7aae12f236e533e8160226
     const memberNames = formData.getAll("memberName[]")
     const memberEmails = formData.getAll("memberEmail[]")
     const memberPhones = formData.getAll("memberPhone[]")
 
+    const memberUpdatePromises = []
+
     for (let i = 0; i < memberNames.length; i++) {
-      if (memberNames[i].trim() !== "") {
+      const name = memberNames[i].trim()
+      if (name !== "") {
         const email = memberEmails[i] || null
         const phone = memberPhones[i] || null
+        const mId = memberIds[i]
 
         if (!email && !phone) {
-          throw new Error(`New member "${memberNames[i]}" must provide either an email address or a phone number.`);
+          throw new Error(`Member "${name}" must provide either an email address or a phone number.`);
         }
 
+<<<<<<< HEAD
         await Member.create({
           subscriptionId: id,
           name: memberNames[i],
@@ -165,6 +195,68 @@ export async function updateFullSubscription(formData) {
       }
     } catch (inngestError) {
       console.error("Inngest event error (non-critical):", inngestError)
+=======
+        if (mId && mId !== "") {
+          memberUpdatePromises.push(Member.update(mId, {
+            name: name,
+            email: email,
+            phone: phone,
+          }))
+        } else {
+          // Member baru langsung di-await karena kita butuh ID-nya untuk Inngest
+          const memberResult = await Member.create({
+            subscriptionId: id,
+            name: name,
+            email: email,
+            phone: phone,
+            userId: null,
+          })
+
+          // Kirim welcome hanya untuk member baru
+          await inngest.send({
+            name: "app/subscription.created",
+            data: {
+              subId: id,
+              specificMemberId: memberResult.insertedId.toString()
+            }
+          })
+        }
+      }
+    }
+
+    if (memberUpdatePromises.length > 0) {
+      await Promise.all(memberUpdatePromises)
+    }
+
+    // LOGIKA INNGEST REMINDER
+    try {
+      if (!isReminderActive && existingSub.isReminderActive) {
+        await inngest.send({
+          name: "app/subscription.reminder.cancel",
+          data: { subId: id }
+        })
+      }
+      else if (isReminderActive && !existingSub.isReminderActive) {
+        await inngest.send({
+          name: "app/subscription.reminder",
+          data: { subId: id, reminderDate: reminderDate },
+        })
+      }
+      else if (isReminderActive && existingSub.reminderDate !== reminderDate) {
+        await inngest.send({
+          name: "app/subscription.reminder.cancel",
+          data: { subId: id }
+        })
+        // Jeda kecil agar pembatalan diproses lebih dulu
+        await new Promise(resolve => setTimeout(resolve, 150))
+        await inngest.send({
+          name: "app/subscription.reminder",
+          data: { subId: id, reminderDate: reminderDate },
+        })
+      }
+    } catch (inngestError) {
+      console.error("Inngest event error:", inngestError)
+>>>>>>> fb2667c4018cf7b46f7aae12f236e533e8160226
     }
 
     revalidatePath(`/dashboard/${id}`)
@@ -185,6 +277,15 @@ export async function deleteSubscription(id) {
     const sub = await Subscription.getByUserAndId(user.userId, id)
     if (!sub) throw new Error("Subscription not found or access denied")
 
+<<<<<<< HEAD
+=======
+    // Batalkan reminder di Inngest sebelum hapus data
+    await inngest.send({
+      name: "app/subscription.reminder.cancel",
+      data: { subId: id }
+    })
+
+>>>>>>> fb2667c4018cf7b46f7aae12f236e533e8160226
     await Member.deleteBySubscriptionId(id, user.userId)
     await Subscription.delete(id, user.userId)
 
