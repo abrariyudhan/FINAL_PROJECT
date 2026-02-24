@@ -36,25 +36,11 @@ export default async function DashboardPage() {
       bgColor: "bg-white",
       accent: "bg-violet-400"
     },
-    {
-      label: "Savings",
-      value: "Rp 0",
-      textColor: "text-slate-900",
-      bgColor: "bg-white",
-      accent: "bg-orange-400"
-    },
   ]
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 md:p-12 font-sans text-slate-900">
       <div className="max-w-6xl mx-auto">
-        {/* <div className="flex justify-center mb-8">
-          <img
-            src="https://i.ibb.co.com/1tJPNJP7/Sub-Track8-cropped-removebg.png"
-            alt="SubTrack8 Logo"
-            className="w-48 md:w-64 lg:w-72 h-auto"
-          />
-        </div> */}
 
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="space-y-1">
@@ -81,7 +67,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-12">
           {statsConfig.map((stat, i) => (
             <div key={i} className={`${stat.bgColor} p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] relative overflow-hidden group transition-all hover:shadow-lg`}>
 

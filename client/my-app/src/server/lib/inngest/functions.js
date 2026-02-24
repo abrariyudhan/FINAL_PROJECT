@@ -21,6 +21,7 @@ async function sendTelegram(chatId, text) {
   }
 }
 
+// 1. FUNGSI PENGINGAT SUBSCRIPTION (RECURRING)
 export const sendSubscriptionReminder = inngest.createFunction(
   {
     id: "send-reminder-email",
@@ -40,7 +41,8 @@ export const sendSubscriptionReminder = inngest.createFunction(
 
     // 2. Ambil data langganan
     const sub = await step.run("fetch-subscription", async () => {
-      return await Subscription.getById(subId)
+      const s = await Subscription.getById(subId)
+      return JSON.parse(JSON.stringify(s))
     })
 
     if (!sub || !sub.isReminderActive) return { message: "Reminder dibatalkan oleh user" }
@@ -55,130 +57,235 @@ export const sendSubscriptionReminder = inngest.createFunction(
       const totalPeople = 1 + (members?.length || 0)
       const pricePerPerson = Math.round(sub.pricePaid / totalPeople)
 
-      // Gabungkan Owner + Member ke dalam satu list penerima dengan ID mereka
+      // Gabungkan Owner + Member
       const allRecipients = [
-        { 
-          id: user._id, 
-          name: user.fullname || user.username, 
-          email: user.email, 
-          isOwner: true, 
-          telegramChatId: user.telegramChatId 
+        {
+          id: user._id.toString(),
+          name: user.fullname || user.username,
+          email: user.email,
+          isOwner: true,
+          telegramChatId: user.telegramChatId
         },
-        ...members.map(m => ({ 
-          id: m._id, 
-          name: m.name, 
-          email: m.email, 
-          isOwner: false, 
-          telegramChatId: m.telegramChatId 
+        ...members.map(m => ({
+          id: m._id.toString(),
+          name: m.name,
+          email: m.email,
+          isOwner: false,
+          telegramChatId: m.telegramChatId
         }))
       ]
 
-      // Kirim email satu per satu agar sapaan "Halo" sesuai nama masing-masing
-      const sendPromises = allRecipients.map(async (recipient) => {
-
-        // --- KIRIM KE TELEGRAM JIKA CHAT ID ADA ---
+      const results = []
+      for (const recipient of allRecipients) {
+        // --- KIRIM KE TELEGRAM ---
         if (recipient.telegramChatId) {
           const teleText = `🔔 <b>Halo ${recipient.name}!</b>\nTagihan <b>${sub.serviceName}</b> sebesar <b>Rp ${sub.pricePaid.toLocaleString('id-ID')}</b> akan segera jatuh tempo.\n\n${recipient.isOwner ? 'Jangan lupa kumpulkan iuran!' : 'Siapkan iuran Anda!'}`
           await sendTelegram(recipient.telegramChatId, teleText)
         }
 
-        // --- TEMPLATE EMAIL ---        
-        // Tombol Telegram (Hanya muncul jika telegramChatId kosong)
-        const telegramBtn = !recipient.telegramChatId 
-          ? `<div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 12px; border: 1px dashed #0ea5e9; text-align: center;">
-               <p style="font-size: 12px; color: #64748b; margin: 0 0 10px 0;">Ingin terima pengingat via Telegram?</p>
-               <a href="https://t.me/SubTrack8_bot?start=${recipient.id}" style="background: #0088cc; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 12px; display: inline-block;">Aktifkan Telegram</a>
-             </div>` 
+        // --- TEMPLATE EMAIL ---
+        const telegramBtn = !recipient.telegramChatId
+          ? `
+            <!-- Telegram CTA -->
+            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 32px; border-radius: 16px; text-align: center; border: 2px solid #bae6fd; margin-bottom: 32px;">
+              <div style="background: white; width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                <span style="font-size: 30px;">📱</span>
+              </div>
+              <h3 style="margin: 0 0 12px 0; color: #0369a1; font-size: 18px; font-weight: 700;">Get Instant Reminders on Telegram</h3>
+              <p style="margin: 0 0 24px 0; color: #0c4a6e; font-size: 14px; line-height: 1.5;">Never miss a payment! Connect your Telegram account to receive timely notifications.</p>
+              <a href="https://t.me/SubTrack8_bot?start=${recipient.id}" 
+                 style="display: inline-block; background: linear-gradient(135deg, #0088cc 0%, #006699 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 6px -1px rgba(0, 136, 204, 0.3);">
+                🚀 Connect Telegram
+              </a>
+            </div>
+          `
           : ""
 
-        // Template List Anggota
         const membersListHtml = isFamily && members.length > 0
           ? `
-          <div style="margin-top: 15px; border-top: 1px dashed #e2e8f0; padding-top: 15px;">
-            <p style="margin: 0 0 10px 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Anggota & Estimasi Iuran:</p>
-            <div style="background: #ffffff; border-radius: 8px; border: 1px solid #f1f5f9;">
-              ${members.map(m => `
-                <div style="padding: 10px; border-bottom: 1px solid #f1f5f9;">
+            <!-- Members Contribution Breakdown -->
+            <div style="margin-top: 24px; padding-top: 24px; border-top: 2px dashed #e2e8f0;">
+              <h3 style="margin: 0 0 16px 0; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">👥 Member Contributions</h3>
+              <div style="background: #ffffff; border-radius: 12px; border: 2px solid #e2e8f0; overflow: hidden;">
+                ${members.map((m, idx) => `
+                  <div style="padding: 16px 20px; border-bottom: ${idx === members.length - 1 ? 'none' : '1px solid #f1f5f9'};">
+                    <table style="width: 100%;">
+                      <tr>
+                        <td style="font-size: 14px; color: #1e293b; font-weight: 500; text-align: left;">
+                          <span style="display: inline-block; width: 8px; height: 8px; background: #0ea5e9; border-radius: 50%; margin-right: 8px;"></span>
+                          ${m.name}
+                        </td>
+                        <td style="font-size: 15px; color: #0ea5e9; font-weight: 700; text-align: right;">
+                          Rp ${pricePerPerson.toLocaleString('id-ID')}
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                `).join('')}
+                <div style="padding: 16px 20px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);">
                   <table style="width: 100%;">
                     <tr>
-                      <td style="font-size: 14px; color: #1e293b; text-align: left;">${m.name}</td>
-                      <td style="font-size: 13px; color: #0ea5e9; font-weight: bold; text-align: right;">Rp ${pricePerPerson.toLocaleString('id-ID')}</td>
+                      <td style="font-size: 14px; color: #1e293b; font-weight: 700; text-align: left;">
+                        <span style="display: inline-block; width: 8px; height: 8px; background: #db2777; border-radius: 50%; margin-right: 8px;"></span>
+                        ${user.fullname || user.username} (Owner)
+                      </td>
+                      <td style="font-size: 15px; color: #db2777; font-weight: 700; text-align: right;">
+                        Rp ${pricePerPerson.toLocaleString('id-ID')}
+                      </td>
                     </tr>
                   </table>
                 </div>
-              `).join('')}
-              <div style="padding: 10px; background: #fdf2f8; border-radius: 0 0 8px 8px;">
-                <table style="width: 100%;">
-                  <tr>
-                    <td style="font-size: 14px; color: #1e293b; font-weight: bold; text-align: left;">${user.fullname || user.username} (Owner)</td>
-                    <td style="font-size: 13px; color: #db2777; font-weight: bold; text-align: right;">Rp ${pricePerPerson.toLocaleString('id-ID')}</td>
-                  </tr>
-                </table>
               </div>
+              <p style="margin: 16px 0 0 0; color: #64748b; font-size: 12px; text-align: center;">
+                <strong>Total:</strong> ${totalPeople} members • <strong>Rp ${sub.pricePaid.toLocaleString('id-ID')}</strong>
+              </p>
             </div>
-          </div>`
+          `
           : ""
 
+        // Dashboard CTA - for all recipients
+        const dashboardCTA = `
+          <!-- Dashboard CTA -->
+          <div style="background: linear-gradient(135deg, #fef3f2 0%, #fee2e2 100%); padding: 24px; border-radius: 16px; text-align: center; border: 2px solid #fecaca; margin-bottom: 32px;">
+            <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 18px; font-weight: 700;">📊 View Subscription Details</h3>
+            <p style="margin: 0 0 24px 0; color: #991b1b; font-size: 14px; line-height: 1.5;">Check full details, payment history, and manage your subscription.</p>
+            <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/${subId}" 
+               style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);">
+              🚀 Open Dashboard
+            </a>
+          </div>
+        `
+
         const htmlContent = `
-          <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 24px; color: #1e293b;">
-            
-            <div style="text-align: center; margin-bottom: 24px;">
-              <img src="https://muhammaddheovani.web.id/logo/logo.png" alt="SubTrack8 Logo" style="height: 40px; margin-bottom: 8px;" />
-              <h1 style="font-size: 20px; margin: 0; color: #1e293b;">SubTrack8</h1>
-            </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SubTrack8 Payment Reminder</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <div style="max-width: 600px; margin: 40px auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    
+    <!-- Header with Logo -->
+    <div style="background: #ffffff; padding: 40px 20px; text-align: center; border-bottom: 3px solid #0ea5e9;">
+      <img src="https://i.ibb.co.com/MDPRRXHc/Sub-Track8-cropped.png" alt="SubTrack8" style="height: 50px; margin-bottom: 0;" />
+    </div>
 
-            <div style="text-align: center; margin-bottom: 24px;">
-              <span style="background: ${isFamily ? '#8b5cf6' : '#0ea5e9'}; color: white; padding: 6px 16px; border-radius: 100px; font-size: 11px; font-weight: 800; text-transform: uppercase;">
-                ${isFamily ? '👨‍👩‍👧‍👦 Family Plan' : '👤 Individual Plan'}
-              </span>
-            </div>
+    <!-- Accent Bar -->
+    <div style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); height: 6px;"></div>
 
-            <h2 style="color: #1e293b; text-align: center;">Halo, ${recipient.name}!</h2>
-            <p style="text-align: center; color: #64748b;">Pengingat untuk langganan <strong>${sub.serviceName}</strong>.</p>
-            
-            <div style="background: #f8fafc; padding: 24px; border-radius: 16px; margin-bottom: 24px; border: 1px solid #f1f5f9;">
-              <table style="width: 100%;">
-                <tr>
-                  <td style="color: #94a3b8; font-size: 13px;">Total Tagihan</td>
-                  <td style="text-align: right; font-weight: 800; color: #1e293b;">Rp ${sub.pricePaid.toLocaleString('id-ID')}</td>
-                </tr>
-                <tr>
-                  <td style="color: #94a3b8; font-size: 13px;">Jatuh Tempo</td>
-                  <td style="text-align: right; font-weight: bold; color: #64748b;">${sub.billingDate}</td>
-                </tr>
-              </table>
-              ${membersListHtml}
-            </div>
+    <!-- Main Content -->
+    <div style="padding: 40px 30px;">
+      
+      <!-- Alert Icon -->
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); width: 80px; height: 80px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(251, 191, 36, 0.3);">
+          <span style="font-size: 40px;">🔔</span>
+        </div>
+      </div>
 
-            <div style="background: ${isFamily ? '#f5f3ff' : '#f0f9ff'}; padding: 16px; border-radius: 12px; border-left: 4px solid ${isFamily ? '#8b5cf6' : '#0ea5e9'};">
-              <p style="font-size: 14px; margin: 0;">
-                <strong>Info:</strong> ${recipient.isOwner
-                  ? `Jangan lupa kumpulkan iuran dari anggota sebesar <b>Rp ${pricePerPerson.toLocaleString('id-ID')}</b>.`
-                  : `Silahkan siapkan iuran Anda sebesar <b>Rp ${pricePerPerson.toLocaleString('id-ID')}</b> untuk diberikan kepada ${user.fullname || user.username}.`
+      <h2 style="margin: 0 0 16px 0; color: #1e293b; font-size: 24px; font-weight: 700; text-align: center;">
+        Payment Reminder
+      </h2>
+      
+      <p style="margin: 0 0 24px 0; color: #64748b; font-size: 16px; line-height: 1.6; text-align: center;">
+        Hi <strong style="color: #1e293b;">${recipient.name}</strong>,
+      </p>
+
+      <p style="margin: 0 0 32px 0; color: #64748b; font-size: 15px; line-height: 1.6; text-align: center;">
+        This is a reminder that your subscription for <strong style="color: #1e293b;">${sub.serviceName}</strong> will be billed soon.
+      </p>
+
+      <!-- Subscription Details Card -->
+      <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+        <h3 style="margin: 0 0 16px 0; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">💳 Billing Information</h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">Service</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 600; text-align: right; font-size: 14px;">${sub.serviceName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">Billing Date</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 600; text-align: right; font-size: 14px;">${new Date(sub.billingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; ${isFamily ? 'border-bottom: 1px solid #e2e8f0;' : ''} color: #64748b; font-size: 14px;">Total Amount</td>
+            <td style="padding: 12px 0; ${isFamily ? 'border-bottom: 1px solid #e2e8f0;' : ''} color: #0ea5e9; font-weight: 700; text-align: right; font-size: 20px;">Rp ${sub.pricePaid.toLocaleString('id-ID')}</td>
+          </tr>
+          ${isFamily ? `
+          <tr>
+            <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Your Share</td>
+            <td style="padding: 12px 0; color: #db2777; font-weight: 700; text-align: right; font-size: 20px;">Rp ${pricePerPerson.toLocaleString('id-ID')}</td>
+          </tr>
+          ` : ''}
+        </table>
+
+        ${membersListHtml}
+      </div>
+
+      <!-- Action Required Notice -->
+      <div style="background: ${isFamily ? 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)' : 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'}; padding: 24px; border-radius: 16px; border-left: 4px solid ${isFamily ? '#8b5cf6' : '#0ea5e9'}; margin-bottom: 32px;">
+        <table style="width: 100%;">
+          <tr>
+            <td style="width: 40px; vertical-align: top; padding-top: 2px;">
+              <span style="font-size: 24px;">${recipient.isOwner ? '💰' : '💳'}</span>
+            </td>
+            <td>
+              <p style="margin: 0; color: ${isFamily ? '#6b21a8' : '#0c4a6e'}; font-size: 14px; line-height: 1.6;">
+                <strong style="display: block; margin-bottom: 8px; font-size: 15px;">
+                  ${recipient.isOwner ? 'Owner Reminder' : 'Your Contribution'}
+                </strong>
+                ${recipient.isOwner 
+                  ? `Please ensure you have <strong>Rp ${pricePerPerson.toLocaleString('id-ID')}</strong> ready for the upcoming billing date. ${isFamily ? 'Don\'t forget to collect contributions from members!' : ''}` 
+                  : `Please prepare your contribution of <strong>Rp ${pricePerPerson.toLocaleString('id-ID')}</strong> before the billing date.`
                 }
               </p>
-            </div>
+            </td>
+          </tr>
+        </table>
+      </div>
 
-            ${telegramBtn}
+      ${dashboardCTA}
 
-            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
-              <p style="font-size: 11px; color: #94a3b8; margin: 0;">
-                Email ini dikirim secara otomatis dari website <a href="https://subtrack8.com" style="color: #0ea5e9; text-decoration: none;">subtrack8.com</a>.
-              </p>
-            </div>
-          </div>`
+      ${telegramBtn}
+
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #f8fafc; padding: 32px 30px; border-top: 1px solid #e2e8f0; text-align: center;">
+      <p style="margin: 0 0 12px 0; color: #94a3b8; font-size: 13px;">
+        You received this email because you're part of a SubTrack8 subscription group.
+      </p>
+      <p style="margin: 0; color: #cbd5e1; font-size: 12px;">
+        © ${new Date().getFullYear()} SubTrack8. All rights reserved.
+      </p>
+      <div style="margin-top: 20px;">
+        <a href="https://muhammaddheovani.web.id" style="color: #0ea5e9; text-decoration: none; font-size: 13px; margin: 0 12px;">Visit Website</a>
+        <span style="color: #cbd5e1;">•</span>
+        <a href="#" style="color: #0ea5e9; text-decoration: none; font-size: 13px; margin: 0 12px;">Help Center</a>
+        <span style="color: #cbd5e1;">•</span>
+        <a href="#" style="color: #0ea5e9; text-decoration: none; font-size: 13px; margin: 0 12px;">Privacy Policy</a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
+`
 
         if (recipient.email) {
-          return resend.emails.send({
+          const res = await resend.emails.send({
             from: 'SubTrack8 <notifications@muhammaddheovani.web.id>',
             to: recipient.email,
-            subject: `🔔 Tagihan ${sub.serviceName} - Rp ${sub.pricePaid.toLocaleString('id-ID')}`,
+            subject: `🔔 Payment Reminder: ${sub.serviceName} - Rp ${sub.pricePaid.toLocaleString('id-ID')}`,
             html: htmlContent
           })
+          results.push(res)
         }
-      })
-
-      return await Promise.all(sendPromises)
+      }
+      return results
     })
 
     // 4. JADWALKAN UNTUK BULAN BERIKUTNYA
@@ -189,7 +296,6 @@ export const sendSubscriptionReminder = inngest.createFunction(
       const nextDateStr = nextMonth.toISOString().split('T')[0]
 
       await Subscription.update(subId, sub.userId, { reminderDate: nextDateStr })
-
       await inngest.send({
         name: "app/subscription.reminder",
         data: { subId, reminderDate: nextDateStr }
@@ -200,7 +306,259 @@ export const sendSubscriptionReminder = inngest.createFunction(
   }
 )
 
-// Fungsi pembatalan
+// 2. FUNGSI WELCOME / INVITATION (SAAT DIBUAT)
+export const sendWelcomeInvitation = inngest.createFunction(
+  { id: "send-welcome-invitation" },
+  { event: "app/subscription.created" },
+  async ({ event, step }) => {
+    const { subId, specificMemberId } = event.data;
+
+    const data = await step.run("fetch-all-data", async () => {
+      const s = await Subscription.getById(subId);
+      const u = await User.getUserById(s.userId);
+      const m = await Member.getBySubscriptionId(subId);
+      return JSON.parse(JSON.stringify({ sub: s, user: u, members: m }));
+    });
+
+    const { sub, user, members } = data;
+    const isFamily = sub.type === "Family";
+    const totalPeople = 1 + (members?.length || 0);
+    const pricePerPerson = Math.round(sub.pricePaid / totalPeople);
+
+    await step.run("send-invitation-emails", async () => {
+      let allToInvite = [
+        { id: user._id.toString(), name: user.fullname || user.username, email: user.email, role: 'Owner' },
+        ...members.map(m => ({ id: m._id.toString(), name: m.name, email: m.email, role: 'Member' }))
+      ];
+
+      if (specificMemberId) {
+        allToInvite = allToInvite.filter(p => p.id === specificMemberId.toString());
+      }
+
+      const invitations = allToInvite.map(async (person) => {
+        if (!person.email) return;
+
+        // Member breakdown - only show if Family
+        const membersListHtml = isFamily && members.length > 0
+          ? `
+            <!-- Members Contribution Breakdown -->
+            <div style="margin-top: 24px; padding-top: 24px; border-top: 2px dashed #e2e8f0;">
+              <h3 style="margin: 0 0 16px 0; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">👥 Member Contributions</h3>
+              <div style="background: #ffffff; border-radius: 12px; border: 2px solid #e2e8f0; overflow: hidden;">
+                ${members.map((m, idx) => `
+                  <div style="padding: 16px 20px; border-bottom: ${idx === members.length - 1 ? 'none' : '1px solid #f1f5f9'};">
+                    <table style="width: 100%;">
+                      <tr>
+                        <td style="font-size: 14px; color: #1e293b; font-weight: 500; text-align: left;">
+                          <span style="display: inline-block; width: 8px; height: 8px; background: #0ea5e9; border-radius: 50%; margin-right: 8px;"></span>
+                          ${m.name}
+                        </td>
+                        <td style="font-size: 15px; color: #0ea5e9; font-weight: 700; text-align: right;">
+                          Rp ${pricePerPerson.toLocaleString('id-ID')}
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                `).join('')}
+                <div style="padding: 16px 20px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);">
+                  <table style="width: 100%;">
+                    <tr>
+                      <td style="font-size: 14px; color: #1e293b; font-weight: 700; text-align: left;">
+                        <span style="display: inline-block; width: 8px; height: 8px; background: #db2777; border-radius: 50%; margin-right: 8px;"></span>
+                        ${user.fullname || user.username} (Owner)
+                      </td>
+                      <td style="font-size: 15px; color: #db2777; font-weight: 700; text-align: right;">
+                        Rp ${pricePerPerson.toLocaleString('id-ID')}
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+              <p style="margin: 16px 0 0 0; color: #64748b; font-size: 12px; text-align: center;">
+                <strong>Total:</strong> ${totalPeople} members • <strong>Rp ${sub.pricePaid.toLocaleString('id-ID')}</strong>
+              </p>
+            </div>
+          `
+          : "";
+
+        // Visit Dashboard CTA - Only for Members (not Owner)
+        const dashboardCTA = person.role === 'Member'
+          ? `
+            <!-- Dashboard CTA -->
+            <div style="background: linear-gradient(135deg, #fef3f2 0%, #fee2e2 100%); padding: 24px; border-radius: 16px; text-align: center; border: 2px solid #fecaca; margin-bottom: 32px;">
+              <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 18px; font-weight: 700;">📊 View Full Details</h3>
+              <p style="margin: 0 0 24px 0; color: #991b1b; font-size: 14px; line-height: 1.5;">Check payment history, billing schedule, and manage your contribution.</p>
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://subtrack8.com'}/dashboard/${subId}" 
+                 style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);">
+                🚀 Open Dashboard
+              </a>
+            </div>
+          `
+          : "";
+
+        // Di dalam sendWelcomeInvitation function, update bagian Subscription Details Card:
+
+const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SubTrack8 ${person.role === 'Owner' ? 'Reminder Activated!' : 'Invitation'}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <div style="max-width: 600px; margin: 40px auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    
+    <!-- Header with Logo -->
+    <div style="background: #ffffff; padding: 40px 20px; text-align: center; border-bottom: 3px solid #0ea5e9;">
+      <img src="https://i.ibb.co.com/MDPRRXHc/Sub-Track8-cropped.png" alt="SubTrack8" style="height: 50px; margin-bottom: 0;" />
+    </div>
+
+    <!-- Accent Bar -->
+    <div style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); height: 6px;"></div>
+
+    <!-- Main Content -->
+    <div style="padding: 40px 30px;">
+      
+      <!-- Success Icon -->
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="background: linear-gradient(135deg, ${person.role === 'Owner' ? '#dcfce7' : '#dbeafe'} 0%, ${person.role === 'Owner' ? '#bbf7d0' : '#bfdbfe'} 100%); width: 80px; height: 80px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <span style="font-size: 40px;">${person.role === 'Owner' ? '🎉' : '👋'}</span>
+        </div>
+      </div>
+
+      <h2 style="margin: 0 0 16px 0; color: #1e293b; font-size: 24px; font-weight: 700; text-align: center;">
+        ${person.role === 'Owner' ? 'Subscription Reminder Activated!' : '👋 You\'ve Been Invited!'}
+      </h2>
+      
+      <p style="margin: 0 0 24px 0; color: #64748b; font-size: 16px; line-height: 1.6; text-align: center;">
+        Hi <strong style="color: #1e293b;">${person.name}</strong>,
+      </p>
+
+      <p style="margin: 0 0 32px 0; color: #64748b; font-size: 15px; line-height: 1.6; text-align: center;">
+        ${person.role === 'Owner'
+            ? `Your subscription reminder for <strong style="color: #1e293b;">${sub.serviceName}</strong> has been successfully created and is now active.`
+            : `<strong style="color: #1e293b;">${user.fullname || user.username}</strong> has invited you to join their subscription group for <strong style="color: #1e293b;">${sub.serviceName}</strong>.`}
+      </p>
+
+      <!-- Subscription Details Card -->
+      <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+        <h3 style="margin: 0 0 16px 0; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📋 Subscription Details</h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">Service</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 600; text-align: right; font-size: 14px;">${sub.serviceName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">Type</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
+              <span style="background: ${sub.type === 'Family' ? '#f0f9ff' : '#fef3f2'}; color: ${sub.type === 'Family' ? '#0369a1' : '#dc2626'}; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">${sub.type}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">Billing Cycle</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 600; text-align: right; font-size: 14px;">${sub.billingCycle} ${sub.billingCycle === 1 ? 'Month' : 'Months'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">Billing Date</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 600; text-align: right; font-size: 14px;">${new Date(sub.billingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+          </tr>
+          ${sub.isReminderActive ? `
+          <tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">Reminder Date</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
+              <span style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                🔔 ${new Date(sub.reminderDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            </td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td style="padding: 12px 0; ${isFamily ? 'border-bottom: 1px solid #e2e8f0;' : ''} color: #64748b; font-size: 14px;">Total Cost</td>
+            <td style="padding: 12px 0; ${isFamily ? 'border-bottom: 1px solid #e2e8f0;' : ''} color: #0ea5e9; font-weight: 700; text-align: right; font-size: 18px;">Rp ${sub.pricePaid.toLocaleString('id-ID')}</td>
+          </tr>
+          ${isFamily ? `
+          <tr>
+            <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Your Share</td>
+            <td style="padding: 12px 0; color: #db2777; font-weight: 700; text-align: right; font-size: 18px;">Rp ${pricePerPerson.toLocaleString('id-ID')}</td>
+          </tr>
+          ` : ''}
+        </table>
+
+        ${membersListHtml}
+      </div>
+
+      ${dashboardCTA}
+
+      <!-- Telegram CTA -->
+      <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 32px; border-radius: 16px; text-align: center; border: 2px solid #bae6fd; margin-bottom: 32px;">
+        <div style="background: white; width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <span style="font-size: 30px;">📱</span>
+        </div>
+        <h3 style="margin: 0 0 12px 0; color: #0369a1; font-size: 18px; font-weight: 700;">Get Instant Reminders on Telegram</h3>
+        <p style="margin: 0 0 24px 0; color: #0c4a6e; font-size: 14px; line-height: 1.5;">Never miss a payment! Connect your Telegram account to receive timely notifications.</p>
+        <a href="https://t.me/SubTrack8_bot?start=${person.id}" 
+           style="display: inline-block; background: linear-gradient(135deg, #0088cc 0%, #006699 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 6px -1px rgba(0, 136, 204, 0.3);">
+          🚀 Connect Telegram
+        </a>
+      </div>
+
+      <!-- Tips Section -->
+      ${person.role === 'Owner' ? `
+      <div style="background: #fef3f2; border-left: 4px solid #dc2626; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+        <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
+          <strong>💡 Pro Tip:</strong> ${isFamily ? `Make sure to collect Rp ${pricePerPerson.toLocaleString('id-ID')} from each member before the billing date!` : 'You\'ll receive a reminder email on the scheduled reminder date. Make sure to check your inbox!'}
+        </p>
+      </div>
+      ` : `
+      <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+        <p style="margin: 0; color: #166534; font-size: 14px; line-height: 1.6;">
+          <strong>ℹ️ What's Next:</strong> You'll receive reminders before each billing date. Make sure to prepare your share of <strong>Rp ${pricePerPerson.toLocaleString('id-ID')}</strong> on time!
+        </p>
+      </div>
+      `}
+
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #f8fafc; padding: 32px 30px; border-top: 1px solid #e2e8f0; text-align: center;">
+      <p style="margin: 0 0 12px 0; color: #94a3b8; font-size: 13px;">
+        You received this email because you're part of a SubTrack8 subscription group.
+      </p>
+      <p style="margin: 0; color: #cbd5e1; font-size: 12px;">
+        © ${new Date().getFullYear()} SubTrack8. All rights reserved.
+      </p>
+      <div style="margin-top: 20px;">
+        <a href="https://subtrack8.com" style="color: #0ea5e9; text-decoration: none; font-size: 13px; margin: 0 12px;">Visit Website</a>
+        <span style="color: #cbd5e1;">•</span>
+        <a href="#" style="color: #0ea5e9; text-decoration: none; font-size: 13px; margin: 0 12px;">Help Center</a>
+        <span style="color: #cbd5e1;">•</span>
+        <a href="#" style="color: #0ea5e9; text-decoration: none; font-size: 13px; margin: 0 12px;">Privacy Policy</a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
+`;
+
+        return resend.emails.send({
+          from: 'SubTrack8 <notifications@muhammaddheovani.web.id>',
+          to: person.email,
+          subject: person.role === 'Owner'
+            ? `SubTrack8 Reminder Created: ${sub.serviceName}`
+            : `You're Invited to ${sub.serviceName} SubTrack8's Reminder`,
+          html: htmlContent
+        });
+      });
+
+      return await Promise.all(invitations);
+    });
+  }
+);
+
+// 3. FUNGSI PEMBATALAN REMINDER
 export const cancelSubscriptionReminder = inngest.createFunction(
   { id: "cancel-reminder" },
   { event: "app/subscription.reminder.cancel" },
