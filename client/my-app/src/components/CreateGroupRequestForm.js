@@ -39,6 +39,8 @@ export default function CreateGroupRequestForm({ masterServices }) {
 
     const formData = new FormData()
     formData.append("serviceName", selectedService.serviceName)
+    formData.append("serviceId", selectedService._id)
+    formData.append("logo", selectedService.logo || "")
     formData.append("title", title)
     formData.append("description", description)
     formData.append("maxSlot", maxSlot)
@@ -63,7 +65,7 @@ export default function CreateGroupRequestForm({ masterServices }) {
             className="group inline-flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.3em]">
             <FiArrowLeft strokeWidth={3} /> My Groups
           </Link>
-          
+
           <div className="space-y-2">
             <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">
               Open <span className="text-slate-400">Sharing.</span>
@@ -75,7 +77,7 @@ export default function CreateGroupRequestForm({ masterServices }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          
+
           {/* Section 1: Service Selection */}
           <div className="bg-white border border-slate-200 rounded-lg p-8 shadow-sm space-y-6">
             <div className="flex items-center gap-3 pb-4 border-b border-slate-50">
@@ -126,8 +128,12 @@ export default function CreateGroupRequestForm({ masterServices }) {
                     className="flex items-center gap-4 p-4 rounded border border-slate-100 hover:border-slate-900 hover:bg-slate-50 cursor-pointer transition-all group"
                   >
                     <div className="w-8 h-8 bg-slate-100 rounded flex items-center justify-center border border-slate-100 group-hover:bg-white flex-shrink-0">
-                      <span className="text-slate-400 font-black text-[10px] uppercase group-hover:text-slate-900">{svc.serviceName.charAt(0)}</span>
-                    </div>
+                      {/* ✅ FIX: Tampilkan logo dari svc.logo */}
+                      {svc.logo ? (
+                        <img src={svc.logo} className="w-5 h-5 object-contain" alt={svc.serviceName} />
+                      ) : (
+                        <span className="text-slate-400 font-black text-[10px] uppercase group-hover:text-slate-900">{svc.serviceName.charAt(0)}</span>
+                      )}                    </div>
                     <p className="font-black text-slate-700 text-[10px] uppercase tracking-tight flex-1">{svc.serviceName}</p>
                     <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">{svc.category}</span>
                   </div>
