@@ -3,7 +3,6 @@ import Link from "next/link";
 import SubCard from "@/components/SubCard";
 import SubTable from "@/components/SubTable";
 import { getCurrentUser } from "@/actions/auth";
-import LogoutButton from "@/components/LogoutButton";
 import Subscription from "@/server/models/Subscription";
 
 // Icons: Feather Icons
