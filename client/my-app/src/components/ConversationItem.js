@@ -49,9 +49,9 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
     <div
       onClick={onClick}
       suppressHydrationWarning
-      className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
+      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
         isActive
-          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm"
+          ? "bg-slate-50 border border-slate-200"
           : "hover:bg-slate-50 border border-transparent"
       }`}
     >
@@ -112,7 +112,7 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
 
       {/* Unread Badge */}
       {unreadCount > 0 && (
-        <div className="flex-shrink-0 w-5 h-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-sm">
+        <div className="flex-shrink-0 w-5 h-5 bg-slate-900 text-white text-[9px] font-black rounded-full flex items-center justify-center">
           {unreadCount > 9 ? "9+" : unreadCount}
         </div>
       )}

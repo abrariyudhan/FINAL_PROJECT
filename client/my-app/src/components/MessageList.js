@@ -49,9 +49,9 @@ export default function MessageList({
   const tabs = ["ALL", "PEOPLE", "GROUPS"];
 
   return (
-    <div className="w-[380px] bg-white border-r border-blue-100 flex flex-col shadow-xl shadow-blue-100/30 m-4 ml-0 rounded-r-3xl">
+    <div className="w-[380px] bg-white border-r border-slate-200 flex flex-col shadow-sm">
       {/* Header */}
-      <div className="p-6 border-b border-blue-100">
+      <div className="p-6 border-b border-slate-200">
         <h2 className="text-2xl font-black text-slate-900 mb-1">Messages</h2>
         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
           {filteredConversations.length} Conversations
@@ -66,7 +66,7 @@ export default function MessageList({
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 focus:border-slate-300 transition-all"
           />
           {/* Search Icon */}
           <svg
@@ -87,7 +87,7 @@ export default function MessageList({
       </div>
 
       {/* Tabs: ALL / PEOPLE / GROUPS */}
-      <div className="px-6 py-2 flex gap-6 border-b border-blue-100">
+      <div className="px-6 py-2 flex gap-6 border-b border-slate-200">
         {tabs.map((tab) => (
           <button
             key={tab}
@@ -101,7 +101,7 @@ export default function MessageList({
             {tab}
             {/* Active Tab Indicator */}
             {activeTab === tab && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 rounded-full"></div>
             )}
           </button>
         ))}
@@ -134,7 +134,7 @@ export default function MessageList({
 
                   {/* Member Info */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors">
+                    <h4 className="font-bold text-slate-900 text-sm truncate group-hover:text-[#0099FF] transition-colors">
                       {member.fullname}
                     </h4>
                     <p className="text-xs text-slate-500 truncate">
@@ -145,7 +145,7 @@ export default function MessageList({
                   {/* Message Icon */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-slate-300 group-hover:text-blue-500 transition-colors"
+                    className="h-5 w-5 text-slate-300 group-hover:text-[#0099FF] transition-colors"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -161,10 +161,10 @@ export default function MessageList({
               ))
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center px-8">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl flex items-center justify-center mb-3 border border-blue-100">
+                <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center mb-3 border border-slate-200">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6 text-blue-400"
+                    className="h-6 w-6 text-slate-300"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -221,10 +221,10 @@ export default function MessageList({
         ) : (
           // Empty State
           <div className="flex flex-col items-center justify-center h-full text-center px-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl flex items-center justify-center mb-4 border border-blue-100">
+            <div className="w-16 h-16 bg-slate-50 rounded-lg flex items-center justify-center mb-4 border border-slate-200">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-8 w-8 text-blue-400"
+                className="h-8 w-8 text-slate-300"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"

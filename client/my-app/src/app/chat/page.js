@@ -419,7 +419,7 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="h-screen flex bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+    <div className="h-screen flex bg-[#FBFBFB] overflow-hidden">
       {/* Left Sidebar with navigation */}
       <Sidebar />
 
