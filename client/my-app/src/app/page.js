@@ -1,160 +1,148 @@
 "use client";
 
 import { AppFooter } from "@/components/Footer";
+import DotGrid from "@/components/DotGrid";
+import TextType from "@/components/TextType";
+import OrbitImages from "@/components/OrbitImages";
+import ScrollReveal from "@/components/ScrollFloat"; 
+import CountUp from "@/components/CountUp";
+import Link from "next/link"; // Jangan lupa import Link
 
 export default function Home() {
+  const images = [
+    "https://upload.wikimedia.org/wikipedia/commons/f/ff/Netflix-new-icon.png",
+    "https://upload.wikimedia.org/wikipedia/commons/2/2a/Apple_Music_logo.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/1/1c/ICloud_logo.svg",
+    "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg",
+  ];
+
   return (
     <>
-      {/* 1. Navbar tetap di paling atas */}
-      {/* 2. Berikan padding-top (pt-24) agar konten tidak tertutup Navbar */}
-      <div className="pt-24 min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        
-        <div className="container mx-auto px-4 py-16">
-          
-          {/* Logo di Body sekarang akan terlihat jelas di bawah Navbar */}
-          <div className="text-center mb-16">
-            <div className="flex justify-center mb-8">
-              <img
-                src="https://i.ibb.co.com/1tJPNJP7/Sub-Track8-cropped-removebg.png"
-                alt="SubTrack8 Logo"
-                className="w-48 md:w-64 lg:w-72 h-auto"
-              />
-            </div>
-
-            <p className="text-2xl text-gray-700 mb-4">
-              Manage all your subscriptions in one place
-            </p>
-            <p className="text-lg text-gray-500">
-              No more forgotten subscriptions or missed payments! 💳
-            </p>
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: '400px', 
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        backgroundColor: '#ffffff'
+      }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <DotGrid dotSize={5} gap={15} baseColor="#ffffff" activeColor="#3410c6" proximity={120} shockRadius={240} shockStrength={9} resistance={800} returnDuration={1.6} />
+        </div>
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', pointerEvents: 'none' }}>
+          <h1 style={{ color: '#000000', fontWeight: 'bold', fontSize: '3.5rem', margin: '0 0 10px 0' }}>With SubTrack8</h1>
+          <div style={{ color: '#6666ff', fontSize: '1.8rem', fontWeight: 'bold' }}>
+            <TextType
+              text={["Manage all your subscriptions in one place", "Track your monthly spending effortlessly", "Never get surprised by hidden renewals", "Optimize your digital lifestyle today"]}
+              typingSpeed={80} pauseDuration={1500} showCursor cursorCharacter="_"
+              texts={["Welcome to React Bits! Good to see you!", "Build some amazing experiences!"]}
+              deletingSpeed={50} variableSpeedEnabled={false} cursorBlinkDuration={0.5}
+            />
           </div>
+        </div>
+      </div>
 
-          <div className="max-w-6xl mx-auto mb-20">
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                <div className="text-5xl mb-4">📊</div>
-                <h3 className="text-2xl font-bold mb-3 text-gray-800">Complete Dashboard</h3>
-                <p className="text-gray-600">
-                  View all subscriptions, spending charts, and statistics in one place
-                </p>
-              </div>
-
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                <div className="text-5xl mb-4">🔔</div>
-                <h3 className="text-2xl font-bold mb-3 text-gray-800">Automatic Reminders</h3>
-                <p className="text-gray-600">
-                  Get notified before your payment due dates
-                </p>
-              </div>
-
-              <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                <div className="text-5xl mb-4">💰</div>
-                <h3 className="text-2xl font-bold mb-3 text-gray-800">Save More Money</h3>
-                <p className="text-gray-600">
-                  Track your monthly expenses and identify unused subscriptions
-                </p>
-              </div>
+      {/* SECTION ORBIT */}
+      <main style={{ backgroundColor: '#ffffff', width: '100%' }}>
+        <section style={{
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 0.8fr',
+          alignItems: 'center',
+          padding: '80px 10%',
+          gap: '40px',
+          overflow: 'visible'
+        }}>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '1rem', color: '#000000', maxWidth: '550px', lineHeight: '1.6' }}>
+              <ScrollReveal baseOpacity={0.1} enableBlur baseRotation={10} blurStrength={5}>
+                SubTrack8 makes it easy to monitor your monthly subscription costs for various entertainment and productivity platforms in real time. Don&apos;t let your balance get drained by forgotten bills.
+              </ScrollReveal>
             </div>
           </div>
-
-          {/* How It Works */}
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-4 text-gray-800">
-              How It Works
-            </h2>
-            <p className="text-center text-gray-600 mb-16">
-              Just 4 simple steps to manage all your subscriptions
-            </p>
-
-            <div className="relative">
-              <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 -translate-y-1/2 z-0"></div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 shadow-lg">
-                    1
-                  </div>
-                  <div className="text-4xl text-center mb-3">🔐</div>
-                  <h3 className="text-xl font-bold mb-2 text-center text-gray-800">Sign Up / Login</h3>
-                  <p className="text-gray-600 text-center text-sm">
-                    Create a free account or log in with your existing account
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                  <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 shadow-lg">
-                    2
-                  </div>
-                  <div className="text-4xl text-center mb-3">➕</div>
-                  <h3 className="text-xl font-bold mb-2 text-center text-gray-800">Add Subscription</h3>
-                  <p className="text-gray-600 text-center text-sm">
-                    Enter the name, price, and due date of your subscription
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                  <div className="bg-gradient-to-br from-pink-500 to-pink-600 text-white w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 shadow-lg">
-                    3
-                  </div>
-                  <div className="text-4xl text-center mb-3">✏️</div>
-                  <h3 className="text-xl font-bold mb-2 text-center text-gray-800">Manage Subscriptions</h3>
-                  <p className="text-gray-600 text-center text-sm">
-                    Edit, delete, or update your subscription payment status
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                  <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 shadow-lg">
-                    4
-                  </div>
-                  <div className="text-4xl text-center mb-3">📈</div>
-                  <h3 className="text-xl font-bold mb-2 text-center text-gray-800">Monitor Spending</h3>
-                  <p className="text-gray-600 text-center text-sm">
-                    View spending charts and gain financial insights
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center mt-20">
-              <div className="inline-block">
-                <a
-                  href="/login"
-                  className="group relative inline-flex items-center justify-center px-10 py-4 text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-full overflow-hidden shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-purple-500/50"
-                >
-                  <span className="relative z-10">Get Started - Free!</span>
-                  <span className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                </a>
-                <p className="text-sm text-gray-500 mt-4">
-                  ✨ No credit card required • 100% Free
-                </p>
-              </div>
-            </div>
+          <div style={{ position: 'relative', height: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <OrbitImages images={images} shape="ellipse" radiusX={300} radiusY={140} rotation={-10} duration={45} itemSize={80} responsive={true} radius={180} direction="normal" fill={true} showPath={true} paused={false} />
           </div>
+        </section>
 
-          <div className="max-w-4xl mx-auto mt-24">
-            <div className="bg-white rounded-3xl shadow-2xl p-12">
-              <div className="grid md:grid-cols-3 gap-8 text-center">
-                <div>
-                  <div className="text-4xl font-bold text-blue-600 mb-2">1000+</div>
-                  <div className="text-gray-600">Active Users</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-bold text-purple-600 mb-2">5000+</div>
-                  <div className="text-gray-600">Subscriptions Managed</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-bold text-pink-600 mb-2">30%</div>
-                  <div className="text-gray-600">Savings on Expenses</div>
-                </div>
+        {/* --- NEW SECTION: WHY CHOOSE US (4 TABLES) --- */}
+        <section style={{ padding: '80px 10%', backgroundColor: '#ffffff' }}>
+          <h2 style={{ textAlign: 'center', fontSize: '2rem', fontWeight: 'bold', marginBottom: '40px', color: '#000' }}>Why Choose SubTrack8?</h2>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(4, 1fr)', 
+            gap: '20px'
+          }}>
+            {[
+              { title: "Centralized View", desc: "See all your active subscriptions across platforms in one single, clean dashboard." },
+              { title: "Smart Alerts", desc: "Get notified before the trial ends or when a price hike is detected on your bills." },
+              { title: "Spending Analytics", desc: "Visualize where your money goes with monthly reports and category breakdowns." },
+              { title: "Cost Optimization", desc: "Identify unused services and get suggestions to switch to cheaper family plans." }
+            ].map((item, idx) => (
+              <div key={idx} style={{ padding: '25px', borderRadius: '20px', backgroundColor: '#f9f9ff', border: '1px solid #eee', textAlign: 'left' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#3410c6', marginBottom: '10px' }}>{item.title}</h3>
+                <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: '1.5' }}>{item.desc}</p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* --- NEW SECTION: CTA BUTTON --- */}
+        <section style={{ textAlign: 'center', padding: '40px 0 60px 0', backgroundColor: '#ffffff' }}>
+          <Link href="/dashboard">
+            <button style={{
+              backgroundColor: '#3410c6',
+              color: '#fff',
+              padding: '15px 40px',
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              borderRadius: '50px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 10px 20px rgba(52, 16, 198, 0.2)',
+              transition: 'transform 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              Get Started Now
+            </button>
+          </Link>
+        </section>
+
+        {/* SECTION COUNTUP */}
+        <div style={{ padding: '60px 10% 80px 10%', backgroundColor: '#ffffff' }}>
+          <div style={{ 
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '30px',
+            textAlign: 'center', padding: '40px', borderRadius: '32px',
+            backgroundColor: '#fbfbfb', border: '1px solid #f0f0f0'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '3rem', fontWeight: '800', color: '#000000' }}>
+                <CountUp from={0} to={12} duration={2} separator="," /><span>.5K+</span>
+              </div>
+              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#3410c6', textTransform: 'uppercase' }}>Active Users</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: '1px solid #eee', borderRight: '1px solid #eee' }}>
+              <div style={{ fontSize: '3rem', fontWeight: '800', color: '#000000' }}>
+                <CountUp from={0} to={450} duration={2.5} separator="." /><span>K+</span>
+              </div>
+              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#3410c6', textTransform: 'uppercase' }}>Subscriptions Tracked</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '3rem', fontWeight: '800', color: '#000000' }}>
+                <span>$</span><CountUp from={0} to={2.4} duration={3} separator="," /><span>M</span>
+              </div>
+              <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#3410c6', textTransform: 'uppercase' }}>Expenses Saved</span>
             </div>
           </div>
         </div>
+      </main>
 
-        {/* Footer diletakkan di dalam div pembungkus atau setelah konten */}
-        <AppFooter />
-      </div>
+      <AppFooter />
     </>
   );
 }
