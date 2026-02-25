@@ -40,11 +40,11 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="w-[90px] bg-white border-r border-slate-100 flex flex-col items-center py-6">
+    <div className="w-[90px] bg-white border-r border-blue-100 flex flex-col items-center py-6 shadow-xl shadow-blue-100/30 m-4 ml-4 rounded-l-3xl">
       {/* Brand Logo */}
       <div className="mb-12">
-        <div className="w-10 h-10 bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-200">
-          <span className="text-white font-black text-lg">f</span>
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+          <span className="text-white font-black text-lg">S</span>
         </div>
       </div>
 
@@ -62,8 +62,8 @@ export default function Sidebar() {
               <div
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
                   isActive
-                    ? "bg-sky-500 text-white shadow-lg shadow-sky-200"
-                    : "text-slate-400 hover:bg-slate-50 hover:text-slate-900"
+                    ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200"
+                    : "text-slate-400 hover:bg-blue-50 hover:text-slate-900"
                 }`}
               >
                 {item.icon}
@@ -86,7 +86,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Menu Toggle (hamburger for mobile - optional) */}
-      <button className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-900 transition-all">
+      <button className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-slate-900 transition-all">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5"

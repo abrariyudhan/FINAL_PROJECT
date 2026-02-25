@@ -50,7 +50,7 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
       onClick={onClick}
       className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
         isActive
-          ? "bg-sky-50 border border-sky-100"
+          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm"
           : "hover:bg-slate-50 border border-transparent"
       }`}
     >
@@ -108,7 +108,7 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
 
       {/* Unread Badge */}
       {unreadCount > 0 && (
-        <div className="flex-shrink-0 w-5 h-5 bg-sky-500 text-white text-[9px] font-black rounded-full flex items-center justify-center">
+        <div className="flex-shrink-0 w-5 h-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-sm">
           {unreadCount > 9 ? "9+" : unreadCount}
         </div>
       )}

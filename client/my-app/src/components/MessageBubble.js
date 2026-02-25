@@ -47,7 +47,7 @@ export default function MessageBubble({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-400 to-purple-500 text-white font-black">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-400 to-pink-500 text-white font-black">
               J
             </div>
           )}
@@ -69,8 +69,8 @@ export default function MessageBubble({
         <div
           className={`relative group ${
             isOwnMessage
-              ? "bg-sky-500 text-white rounded-[1.25rem] rounded-tr-md"
-              : "bg-slate-100 text-slate-900 rounded-[1.25rem] rounded-tl-md"
+              ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-[1.25rem] rounded-tr-md shadow-md shadow-blue-200"
+              : "bg-white text-slate-900 rounded-[1.25rem] rounded-tl-md border border-blue-100"
           } px-4 py-3 shadow-sm`}
         >
           {/* Text Message */}
@@ -125,7 +125,7 @@ export default function MessageBubble({
             {Object.entries(reactionCounts).map(([emoji, count]) => (
               <div
                 key={emoji}
-                className="bg-white border border-slate-200 rounded-full px-2 py-0.5 flex items-center gap-1 shadow-sm"
+                className="bg-white border border-blue-200 rounded-full px-2 py-0.5 flex items-center gap-1 shadow-sm"
               >
                 <span className="text-xs">{emoji}</span>
                 <span className="text-[10px] font-bold text-slate-600">
