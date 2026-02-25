@@ -421,7 +421,7 @@ export default function ChatPage() {
 
   return (
     <div className="fixed top-[73px] md:px-12 md:py-4 left-0 right-0 bottom-0 flex bg-[#FBFBFB]">
-      <Navbar user={currentUser} />
+
       {/* Left Sidebar with navigation */}
       {/* <Sidebar /> */}
 

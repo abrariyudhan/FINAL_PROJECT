@@ -43,7 +43,8 @@ export default class GroupRequest {
       {
         $addFields: {
           serviceName: { $ifNull: ["$service.serviceName", "$serviceName"] },
-          logo: { $ifNull: ["$service.logo", "$logo"] }
+          logo: { $ifNull: ["$service.logo", "$logo"] },
+          category: { $ifNull: ["$service.category", "$category"] } // ✅ TAMBAH INI
         }
       },
       { $sort: { createdAt: -1 } }
@@ -84,7 +85,8 @@ export default class GroupRequest {
       {
         $addFields: {
           serviceName: { $ifNull: ["$service.serviceName", "$serviceName"] },
-          logo: { $ifNull: ["$service.logo", "$logo"] }
+          logo: { $ifNull: ["$service.logo", "$logo"] },
+          category: { $ifNull: ["$service.category", "$category"] } // ✅ TAMBAH INI
         }
       },
       { $sort: { createdAt: -1 } }
@@ -126,7 +128,8 @@ export default class GroupRequest {
       {
         $addFields: {
           serviceName: { $ifNull: ["$service.serviceName", "$serviceName"] },
-          logo: { $ifNull: ["$service.logo", "$logo"] }
+          logo: { $ifNull: ["$service.logo", "$logo"] },
+          category: { $ifNull: ["$service.category", "$category"] } // ✅ TAMBAH INI
         }
       },
       { $sort: { createdAt: -1 } }
@@ -170,7 +173,8 @@ export default class GroupRequest {
       {
         $addFields: {
           serviceName: { $ifNull: ["$service.serviceName", "$serviceName"] },
-          logo: { $ifNull: ["$service.logo", "$logo"] }
+          logo: { $ifNull: ["$service.logo", "$logo"] },
+          category: { $ifNull: ["$service.category", "$category"] } // ✅ TAMBAH INI
         }
       }
     ]).toArray();
@@ -179,28 +183,36 @@ export default class GroupRequest {
     return result[0];
   }
 
-  // Buat GroupRequest baru — tidak perlu subscriptionId/serviceId lagi
+  // ✅ FIX: Tambah category dan serviceId
   static async create(data) {
     const collection = await this.getCollection();
-    return await collection.insertOne({
+    
+    const doc = {
       ownerId: new ObjectId(data.ownerId),
       serviceName: data.serviceName,
       logo: data.logo || "",
+      category: data.category || "Other", // ✅ TAMBAH INI
       title: data.title,
       description: data.description || "",
       maxSlot: Number(data.maxSlot),
       availableSlot: Number(data.maxSlot),
       status: "open",
       createdAt: new Date(),
-    });
+    };
+
+    // ✅ TAMBAH INI: Jika ada serviceId, simpan sebagai ObjectId
+    if (data.serviceId) {
+      doc.serviceId = new ObjectId(data.serviceId);
+    }
+
+    return await collection.insertOne(doc);
   }
 
-  // Update GroupRequest (edit oleh owner)
+  // ✅ FIX: Update juga harus handle category
   static async update(id, ownerId, data) {
     const collection = await this.getCollection();
     const groupRequest = await this.getById(id);
 
-    // Hitung ulang availableSlot jika maxSlot berubah
     const slotDiff = Number(data.maxSlot) - groupRequest.maxSlot;
     const newAvailableSlot = Math.max(0, groupRequest.availableSlot + slotDiff);
     const newStatus = newAvailableSlot <= 0
@@ -215,6 +227,7 @@ export default class GroupRequest {
         $set: {
           serviceName: data.serviceName,
           logo: data.logo || groupRequest.logo || "",
+          category: data.category || groupRequest.category || "Other", // ✅ TAMBAH INI
           title: data.title,
           description: data.description || "",
           maxSlot: Number(data.maxSlot),
@@ -237,7 +250,6 @@ export default class GroupRequest {
     );
   }
 
-  // Tambah slot kembali saat member dihapus
   static async incrementSlot(id) {
     const collection = await this.getCollection();
     const groupRequest = await this.getById(id);

@@ -6,6 +6,23 @@ import { sendMemberRequest } from "@/actions/groupRequest"
 import { useRouter } from "next/navigation"
 import { FiArrowLeft, FiSearch, FiLayers, FiUsers, FiLock, FiPlus, FiArrowUpRight } from "react-icons/fi"
 
+function SectionHeader({ title, count, active }) {
+  return (
+    <div className="flex items-center gap-4 mb-8 px-4">
+      <h2 className="text-2xl font-black uppercase tracking-tight">
+        {title}
+      </h2>
+      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+        active 
+          ? "bg-emerald-50 text-emerald-600" 
+          : "bg-slate-100 text-slate-400"
+      }`}>
+        {count} {count === 1 ? "Group" : "Groups"}
+      </span>
+    </div>
+  )
+}
+
 // Status Badge untuk request user
 function StatusBadge({ status }) {
   const config = {
@@ -33,7 +50,7 @@ function GroupStatusBadge({ status }) {
 }
 
 // Card untuk satu GroupRequest
-function GroupRequestCard({ groupRequest, requestStatus, currentUserId, inactive }) {
+function GroupRequestCard({ groupRequest, requestStatus, currentUserId, inactive, pendingCount }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState("")
@@ -58,8 +75,9 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId, inactive
     })
   }
 
-  const logo = groupRequest.service?.logo || null
-  const serviceName = groupRequest.service?.serviceName || "Unknown Service"
+  const logo = groupRequest.service?.logo || groupRequest.logo || null
+  const serviceName = groupRequest.service?.serviceName || groupRequest.serviceName || "Unknown Service"
+  const category = groupRequest.service?.category || groupRequest.category || "Other"
 
   return (
     <div className={`bg-white border ${isInactive ? "border-slate-100 opacity-60" : "border-slate-200 hover:border-slate-900"} rounded-lg transition-all overflow-hidden flex flex-col shadow-sm group`}>
@@ -69,7 +87,7 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId, inactive
             {logo ? (
               <img src={logo} className="w-8 h-8 object-contain" alt={serviceName} />
             ) : (
-              <span className="font-black text-slate-300 uppercase">{serviceName.charAt(0)}</span>
+              <span className="font-black text-slate-300 uppercase text-lg">{serviceName.charAt(0)}</span>
             )}
           </div>
           <GroupStatusBadge status={groupRequest.status} />
@@ -80,7 +98,7 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId, inactive
             {groupRequest.title}
           </h3>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
-            {serviceName}
+            {serviceName} • {category}
           </p>
         </div>
 
@@ -90,7 +108,8 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId, inactive
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-50">
+        {/* ✅ Grid dengan 3 kolom jika ada pending requests */}
+        <div className={`grid ${pendingCount > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-4 pt-6 border-t border-slate-50`}>
           <div>
             <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Slots Left</span>
             <p className="text-sm font-black">
@@ -103,6 +122,16 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId, inactive
               {isOwner ? "You" : (groupRequest.owner?.username || "Admin")}
             </p>
           </div>
+          
+          {/* ✅ Tampilkan Request Queue jika ada */}
+          {pendingCount > 0 && (
+            <div>
+              <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Queue</span>
+              <p className="text-sm font-black text-amber-500">
+                {pendingCount} <span className="text-slate-300 text-xs">waiting</span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -139,22 +168,7 @@ function GroupRequestCard({ groupRequest, requestStatus, currentUserId, inactive
   )
 }
 
-// Section header dengan counter
-function SectionHeader({ title, count, active }) {
-  return (
-    <div className="flex items-center gap-4 mb-10">
-      <div className={`w-1 h-8 ${active ? "bg-slate-900" : "bg-slate-200"} rounded-full`}></div>
-      <div>
-        <h2 className="text-sm font-black uppercase tracking-widest">{title}</h2>
-        <p className="text-[10px] text-slate-400 font-medium tracking-wide">
-          {count} group{count !== 1 ? "s" : ""} detected in registry
-        </p>
-      </div>
-    </div>
-  )
-}
-
-export default function ExploreClient({ groupRequests, myRequests, currentUserId }) {
+export default function ExploreClient({ groupRequests, myRequests, currentUserId, pendingCounts }) {
   const [search, setSearch] = useState("")
 
   const requestStatusMap = myRequests.reduce((acc, req) => {
@@ -167,6 +181,7 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
     return (
       gr.title?.toLowerCase().includes(q) ||
       gr.service?.serviceName?.toLowerCase().includes(q) ||
+      gr.serviceName?.toLowerCase().includes(q) ||
       gr.description?.toLowerCase().includes(q)
     )
   })
@@ -179,9 +194,9 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
       <div className="max-w-7xl mx-auto">
 
         {/* --- Header --- */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between mb-16 px-4 gap-8">
+        <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 px-4 gap-8">
           <div className="space-y-4">
-             <Link 
+            <Link 
               href="/dashboard" 
               className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-widest"
             >
@@ -190,18 +205,26 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
             <h1 className="text-4xl font-black tracking-tighter uppercase">Explore <span className="text-slate-400">Hub</span></h1>
           </div>
           
-          <div className="flex items-center gap-8">
-             <Link 
+          <div className="flex items-center gap-4">
+            <Link 
               href="/dashboard/group-requests" 
-              className="flex items-center gap-2 text-xs font-black text-slate-900 hover:text-slate-500 transition-all uppercase tracking-widest border-b-2 border-slate-900 pb-1"
+              className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-900 text-slate-900 rounded text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-50 transition-all shadow-sm"
             >
-              <FiLayers size={14} /> My Groups
+              <FiLayers strokeWidth={3} size={16} /> My Groups
+            </Link>
+            
+            <Link
+              href="/dashboard/group-requests/create"
+              className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+            >
+              <FiPlus strokeWidth={3} size={16} />
+              New Group
             </Link>
           </div>
         </header>
 
         {/* --- Search Bar --- */}
-        <div className="bg-white border border-slate-200 p-2 rounded-lg mb-16 shadow-sm flex items-center">
+        <div className="bg-white border border-slate-200 p-2 rounded-lg mb-12 shadow-sm flex items-center">
           <div className="px-4 text-slate-400">
             <FiSearch size={20} />
           </div>
@@ -224,7 +247,7 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
             {/* Section: Active */}
             {activeGroups.length > 0 && (
               <div>
-                <SectionHeader title="Active Groups" count={activeGroups.length} active={true} />
+                <SectionHeader title="Available Groups to Join" count={activeGroups.length} active={true} />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {activeGroups.map((gr) => (
                     <GroupRequestCard
@@ -232,6 +255,7 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
                       groupRequest={gr}
                       requestStatus={requestStatusMap[gr._id.toString()]}
                       currentUserId={currentUserId}
+                      pendingCount={pendingCounts[gr._id.toString()] || 0}
                     />
                   ))}
                 </div>
@@ -250,6 +274,7 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
                       requestStatus={requestStatusMap[gr._id.toString()]}
                       currentUserId={currentUserId}
                       inactive={true}
+                      pendingCount={pendingCounts[gr._id.toString()] || 0}
                     />
                   ))}
                 </div>

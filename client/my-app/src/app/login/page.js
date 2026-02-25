@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+    const [isRedirecting, setIsRedirecting] = useState(false)
+
 
   useEffect(() => {
     const script = document.createElement("script")
@@ -55,6 +57,7 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (data.success) {
+        setIsRedirecting(true)
         await Swal.fire({
           icon: "success",
           title: "Welcome!",
@@ -123,6 +126,7 @@ export default function LoginPage() {
       })
     }
 
+    setIsRedirecting(true)
     await Swal.fire({
       icon: "success",
       title: "Welcome Back!",
@@ -133,6 +137,17 @@ export default function LoginPage() {
 
     router.push("/dashboard")
     setLoading(false)
+  }
+
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#050505]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500 mx-auto mb-4"></div>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Redirecting...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
