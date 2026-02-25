@@ -9,29 +9,174 @@ export default class GroupRequest {
   }
 
   static async getAllOpen() {
-    const collection = await this.getCollection();
-    return await collection.find({ status: "open" }).toArray();
+    const db = await getDb();
+    return await db.collection("groupRequests").aggregate([
+      { $match: { status: "open" } },
+      {
+        $lookup: {
+          from: "services",
+          localField: "serviceId",
+          foreignField: "_id",
+          as: "service"
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "ownerId",
+          foreignField: "_id",
+          as: "owner"
+        }
+      },
+      {
+        $unwind: {
+          path: "$service",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $unwind: {
+          path: "$owner",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          serviceName: { $ifNull: ["$service.serviceName", "$serviceName"] },
+          logo: { $ifNull: ["$service.logo", "$logo"] }
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]).toArray();
   }
 
   static async getAll() {
-    const collection = await this.getCollection();
-    return await collection.find({}).sort({ createdAt: -1 }).toArray();
+    const db = await getDb();
+    return await db.collection("groupRequests").aggregate([
+      {
+        $lookup: {
+          from: "services",
+          localField: "serviceId",
+          foreignField: "_id",
+          as: "service"
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "ownerId",
+          foreignField: "_id",
+          as: "owner"
+        }
+      },
+      {
+        $unwind: {
+          path: "$service",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $unwind: {
+          path: "$owner",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          serviceName: { $ifNull: ["$service.serviceName", "$serviceName"] },
+          logo: { $ifNull: ["$service.logo", "$logo"] }
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]).toArray();
   }
 
   static async getByOwnerId(ownerId) {
-    const collection = await this.getCollection();
-    return await collection
-      .find({ ownerId: new ObjectId(ownerId) })
-      .sort({ createdAt: -1 })
-      .toArray();
+    const db = await getDb();
+    return await db.collection("groupRequests").aggregate([
+      { $match: { ownerId: new ObjectId(ownerId) } },
+      {
+        $lookup: {
+          from: "services",
+          localField: "serviceId",
+          foreignField: "_id",
+          as: "service"
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "ownerId",
+          foreignField: "_id",
+          as: "owner"
+        }
+      },
+      {
+        $unwind: {
+          path: "$service",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $unwind: {
+          path: "$owner",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          serviceName: { $ifNull: ["$service.serviceName", "$serviceName"] },
+          logo: { $ifNull: ["$service.logo", "$logo"] }
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]).toArray();
   }
 
   static async getById(id) {
     if (!id || id.length !== 24) throw new Error("Invalid GroupRequest ID");
-    const collection = await this.getCollection();
-    const result = await collection.findOne({ _id: new ObjectId(id) });
-    if (!result) throw new NotFound("GroupRequest not found");
-    return result;
+    const db = await getDb();
+
+    const result = await db.collection("groupRequests").aggregate([
+      { $match: { _id: new ObjectId(id) } },
+      {
+        $lookup: {
+          from: "services",
+          localField: "serviceId",
+          foreignField: "_id",
+          as: "service"
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "ownerId",
+          foreignField: "_id",
+          as: "owner"
+        }
+      },
+      {
+        $unwind: {
+          path: "$service",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $unwind: {
+          path: "$owner",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          serviceName: { $ifNull: ["$service.serviceName", "$serviceName"] },
+          logo: { $ifNull: ["$service.logo", "$logo"] }
+        }
+      }
+    ]).toArray();
+
+    if (!result || result.length === 0) throw new NotFound("GroupRequest not found");
+    return result[0];
   }
 
   // Buat GroupRequest baru — tidak perlu subscriptionId/serviceId lagi

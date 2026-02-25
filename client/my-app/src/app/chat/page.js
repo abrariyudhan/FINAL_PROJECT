@@ -22,6 +22,7 @@ import {
 } from "@/actions/chat";
 import { getCurrentUser } from "@/actions/auth";
 import { syncGroupChats } from "@/actions/syncChats";
+import Navbar from "@/components/Navbar";
 
 export default function ChatPage() {
   // State management for chat application
@@ -419,11 +420,13 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="h-screen flex bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+    <div className="fixed top-[73px] md:px-12 md:py-4 left-0 right-0 bottom-0 flex bg-[#FBFBFB]">
+      <Navbar user={currentUser} />
       {/* Left Sidebar with navigation */}
-      <Sidebar />
+      {/* <Sidebar /> */}
 
       {/* Middle section with conversation list */}
+      <div className="flex-shrink-0 w-80 border-r border-gray-200 flex flex-col overflow-hidden">
       <MessageList
         conversations={conversations}
         groupMembers={groupMembers}
@@ -431,8 +434,10 @@ export default function ChatPage() {
         onSelectConversation={handleSelectConversation}
         onStartConversation={handleStartConversation}
       />
+      </div>
 
       {/* Right section with active chat */}
+      <div className="flex-1 flex flex-col overflow-hidden">
       <ChatArea
         activeConversation={activeConversation}
         messages={messages}
@@ -446,6 +451,7 @@ export default function ChatPage() {
         onRemoveGroupMember={handleRemoveGroupMember}
         onDeleteGroup={handleDeleteGroup}
       />
+      </div>
     </div>
   );
 }

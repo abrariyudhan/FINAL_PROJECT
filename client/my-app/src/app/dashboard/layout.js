@@ -1,10 +1,12 @@
-import Navbar from "@/components/Navbar";
+import NavbarWrapper from "@/components/NavbarWrapper";
+import { div } from "three/src/nodes/math/OperatorNode";
 
-export default function UserLayout({children}){
-  return(
-    <div>
-        <Navbar />
-      {children}
-    </div>
+export default function RootLayout({ children }) {
+  return (
+    <>
+      <NavbarWrapper />
+      <div className="h-16" />
+        {children}
+    </>
   )
 }

@@ -28,12 +28,12 @@ export default function ChatArea({
   // If no conversation is selected
   if (!activeConversation) {
     return (
-      <div className="flex-1 bg-white flex items-center justify-center m-4 mr-4 rounded-3xl shadow-xl shadow-blue-100/30">
+      <div className="flex-1 bg-white flex items-center justify-center border-l border-slate-200">
         <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-blue-100">
+          <div className="w-20 h-20 bg-slate-50 rounded-lg flex items-center justify-center mx-auto mb-4 border border-slate-200">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-10 w-10 text-blue-400"
+              className="h-10 w-10 text-slate-300"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -58,9 +58,9 @@ export default function ChatArea({
   }
 
   return (
-    <div className="flex-1 bg-white flex flex-col m-4 mr-4 rounded-3xl shadow-xl shadow-blue-100/30 overflow-hidden">
+    <div className="flex-1 bg-white flex flex-col border-l border-slate-200 overflow-hidden">
       {/* Chat Header */}
-      <div className="border-b border-blue-100 p-6 flex items-center justify-between bg-gradient-to-r from-blue-50/30 to-indigo-50/30">
+      <div className="border-b border-slate-200 p-4.5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* User/Group Avatar */}
           <div className="relative">
@@ -137,10 +137,10 @@ export default function ChatArea({
           // Empty conversation state
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-blue-100">
+              <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-200">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8 text-blue-300"
+                  className="h-8 w-8 text-slate-300"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

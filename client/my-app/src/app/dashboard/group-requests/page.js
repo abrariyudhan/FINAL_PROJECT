@@ -17,19 +17,21 @@ export default async function GroupRequestsPage() {
 
   const myGroupRequestsWithService = await Promise.all(
     myGroupRequests.map(async (gr) => {
-      // Ambil service via subscription
-      let service = null
-      if (gr.subscriptionId) {
-        const subscription = await db.collection("subscriptions").findOne({
-          _id: new ObjectId(gr.subscriptionId.toString())
-        })
-        if (subscription) {
-          service = {
-            serviceName: subscription.serviceName,
-            logo: subscription.logo,
-            category: subscription.category,
-          }
-        }
+      // ✅ FIX: Ambil service dari table services menggunakan serviceId
+      let service = null;
+      if (gr.serviceId) {
+        service = await db.collection("services").findOne({
+          _id: new ObjectId(gr.serviceId.toString())
+        });
+      }
+
+      // ✅ Fallback: Jika service tidak ditemukan, pakai field langsung dari groupRequest
+      if (!service) {
+        service = {
+          serviceName: gr.serviceName || "Unknown Service",
+          logo: gr.logo || null,
+          category: gr.category || "Other",
+        };
       }
 
       const approvedCount = await db.collection("memberRequests").countDocuments({
@@ -56,19 +58,21 @@ export default async function GroupRequestsPage() {
       });
       if (!gr) return null;
 
-      // Ambil service via subscription
-      let service = null
-      if (gr.subscriptionId) {
-        const subscription = await db.collection("subscriptions").findOne({
-          _id: new ObjectId(gr.subscriptionId.toString())
-        })
-        if (subscription) {
-          service = {
-            serviceName: subscription.serviceName,
-            logo: subscription.logo,
-            category: subscription.category,
-          }
-        }
+      // ✅ FIX: Ambil service dari table services menggunakan serviceId
+      let service = null;
+      if (gr.serviceId) {
+        service = await db.collection("services").findOne({
+          _id: new ObjectId(gr.serviceId.toString())
+        });
+      }
+
+      // ✅ Fallback: Jika service tidak ditemukan, pakai field langsung
+      if (!service) {
+        service = {
+          serviceName: gr.serviceName || "Unknown Service",
+          logo: gr.logo || null,
+          category: gr.category || "Other",
+        };
       }
 
       const owner = await db.collection("users").findOne(

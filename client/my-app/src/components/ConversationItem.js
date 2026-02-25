@@ -48,9 +48,10 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
   return (
     <div
       onClick={onClick}
-      className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
+      suppressHydrationWarning
+      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
         isActive
-          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm"
+          ? "bg-slate-50 border border-slate-200"
           : "hover:bg-slate-50 border border-transparent"
       }`}
     >
@@ -96,7 +97,10 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
           <h3 className="font-bold text-slate-900 text-sm truncate">
             {userName || "Unknown User"}
           </h3>
-          <span className="text-[10px] text-slate-400 flex-shrink-0">
+          <span
+            suppressHydrationWarning
+            className="text-[10px] text-slate-400 flex-shrink-0"
+          >
             {formatTime(messageTime)}
           </span>
         </div>
@@ -108,7 +112,7 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
 
       {/* Unread Badge */}
       {unreadCount > 0 && (
-        <div className="flex-shrink-0 w-5 h-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-sm">
+        <div className="flex-shrink-0 w-5 h-5 bg-slate-900 text-white text-[9px] font-black rounded-full flex items-center justify-center">
           {unreadCount > 9 ? "9+" : unreadCount}
         </div>
       )}
