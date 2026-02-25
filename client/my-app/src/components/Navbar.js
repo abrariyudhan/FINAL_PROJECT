@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HiHome, HiChartPie, HiGlobeAlt, HiLogout } from "react-icons/hi";
+import { HiHome, HiChartPie, HiGlobeAlt, HiLogout, HiChatAlt2 } from "react-icons/hi"; // Tambah HiChatAlt2
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -14,14 +14,14 @@ export default function Navbar() {
     { name: "Beranda", href: "/", icon: <HiHome className="w-5 h-5" /> },
     { name: "Dashboard", href: "/dashboard", icon: <HiChartPie className="w-5 h-5" /> },
     { name: "Explore Group", href: "/dashboard/explore", icon: <HiGlobeAlt className="w-5 h-5" /> },
+    { name: "Chat", href: "/chat", icon: <HiChatAlt2 className="w-5 h-5" /> }, // Menu baru di sini
   ];
 
   return (
     <nav className="bg-white/80 backdrop-blur-md fixed w-full z-30 top-0 start-0 border-b border-gray-200">
-      {/* Menggunakan px-6 dan menghilangkan max-w-screen agar benar-benar ke ujung */}
       <div className="flex items-center justify-between mx-auto p-4 px-6">
         
-        {/* SISI KIRI: LOGO & NAMA USER (Pojok Kiri) */}
+        {/* SISI KIRI: LOGO & NAMA USER */}
         <div className="flex items-center space-x-4 flex-1">
           <Link href="/" className="flex items-center">
             <img
@@ -32,12 +32,12 @@ export default function Navbar() {
           </Link>
           <div className="h-6 w-[1px] bg-gray-300"></div>
           <div className="flex flex-col -space-y-1">
-            <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Logged in as</span>
+            <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Welcome Back</span>
             <span className="text-sm font-bold text-gray-700">{user.name}</span>
           </div>
         </div>
 
-        {/* SISI TENGAH: NAVIGASI (Tetap di Tengah) */}
+        {/* SISI TENGAH: NAVIGASI (Otomatis bertambah menu Chat) */}
         <div className="hidden md:flex items-center justify-center">
           <ul className="flex flex-row space-x-2 bg-gray-100/80 p-1.5 rounded-full border border-gray-200 shadow-inner">
             {navItems.map((item) => {
@@ -61,7 +61,7 @@ export default function Navbar() {
           </ul>
         </div>
 
-        {/* SISI KANAN: LOGOUT (Pojok Kanan) */}
+        {/* SISI KANAN: LOGOUT */}
         <div className="flex flex-1 justify-end">
           <button
             onClick={() => console.log("Logout action")}
