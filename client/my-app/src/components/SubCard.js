@@ -59,7 +59,7 @@ export default function SubCard({ sub }) {
               {sub.logo ? (
                 <img src={sub.logo} alt={sub.serviceName} className="w-full h-full object-contain p-2" />
               ) : (
-                <span className="font-black text-sm uppercase">{sub.serviceName.charAt(0)}</span>
+                <span className="font-black text-sm uppercase">{sub.serviceName?.charAt(0) || "?"}</span>
               )}
             </div>
             

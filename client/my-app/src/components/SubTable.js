@@ -37,7 +37,7 @@ export default function SubTable({ subscriptions, today }) {
                           />
                         ) : (
                           <span className="font-black text-xs uppercase">
-                            {sub.serviceName.charAt(0)}
+                            {sub.serviceName?.charAt(0) || "?"}
                           </span>
                         )}
                       </div>

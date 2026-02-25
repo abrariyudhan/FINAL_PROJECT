@@ -1,16 +1,19 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { createFullSubscription } from "@/actions/subscription";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiArrowLeft, FiTarget, FiCalendar, FiUsers, FiCreditCard, FiPlus, FiX, FiCheck } from "react-icons/fi";
 
 export default function AddSubscriptionForm({ masterServices }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false)
   const [isManualInput, setIsManualInput] = useState(false)
   
   const [selectedServiceName, setSelectedServiceName] = useState("")
   const [category, setCategory] = useState("Entertainment")
   const [currentLogo, setCurrentLogo] = useState("")
+  const [selectedServiceId, setSelectedServiceId] = useState("") // ✅ Tambah serviceId
   
   const [subType, setSubType] = useState("Individual")
   const [members, setMembers] = useState([])
@@ -36,6 +39,7 @@ export default function AddSubscriptionForm({ masterServices }) {
     setSelectedServiceName(svc.serviceName)
     setCategory(svc.category || "Entertainment")
     setCurrentLogo(svc.logo || "")
+    setSelectedServiceId(svc._id) // ✅ Simpan serviceId
     setIsOpen(false)
   }
 
@@ -44,6 +48,7 @@ export default function AddSubscriptionForm({ masterServices }) {
     setSelectedServiceName("")
     setCategory("Other")
     setCurrentLogo("")
+    setSelectedServiceId("") // ✅ Reset serviceId
     setIsOpen(false)
   }
 
@@ -57,6 +62,36 @@ export default function AddSubscriptionForm({ masterServices }) {
   const inputStyles = "w-full p-4 bg-white border border-slate-200 rounded-md outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-sm font-bold text-slate-900 transition-all placeholder:text-slate-300 shadow-sm"
   const labelStyles = "block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1"
   const cardStyles = "bg-white p-8 rounded-lg border border-slate-200 shadow-sm"
+
+  // ✅ Handle form submit manually
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    
+    // ✅ Tambahkan data dari state yang tidak ada di form
+    formData.set("serviceName", selectedServiceName);
+    formData.set("category", category);
+    formData.set("logo", currentLogo);
+    if (selectedServiceId) {
+      formData.set("serviceId", selectedServiceId);
+    }
+
+    console.log("=== FORM SUBMIT DEBUG ===");
+    console.log("ServiceName:", formData.get("serviceName"));
+    console.log("Category:", formData.get("category"));
+    console.log("Logo:", formData.get("logo"));
+    console.log("ServiceId:", formData.get("serviceId"));
+
+    const result = await createFullSubscription(formData);
+    
+    if (result?.error) {
+      alert(result.error);
+    } else {
+      router.push("/dashboard");
+      router.refresh();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FBFBFB] p-6 md:px-12 md:py-12 font-sans text-slate-900 antialiased">
@@ -76,7 +111,8 @@ export default function AddSubscriptionForm({ masterServices }) {
           </div>
         </header>
 
-        <form action={createFullSubscription} className="space-y-8 pb-20">
+        {/* ✅ Change: action -> onSubmit */}
+        <form onSubmit={handleSubmit} className="space-y-8 pb-20">
           
           {/* Section 1: Service Details */}
           <div className={cardStyles}>
@@ -90,7 +126,15 @@ export default function AddSubscriptionForm({ masterServices }) {
               
               {isManualInput ? (
                 <div className="flex gap-2">
-                  <input name="serviceName" value={selectedServiceName} onChange={(e) => setSelectedServiceName(e.target.value)} placeholder="ENTER SERVICE NAME..." className={inputStyles} required autoFocus />
+                  {/* ✅ Tidak perlu name attribute karena pakai state */}
+                  <input 
+                    value={selectedServiceName} 
+                    onChange={(e) => setSelectedServiceName(e.target.value)} 
+                    placeholder="ENTER SERVICE NAME..." 
+                    className={inputStyles} 
+                    required 
+                    autoFocus 
+                  />
                   <button type="button" onClick={() => setIsManualInput(false)} className="px-4 bg-slate-100 hover:bg-slate-200 rounded-md text-slate-600 transition-all">
                     ↺
                   </button>
@@ -130,7 +174,13 @@ export default function AddSubscriptionForm({ masterServices }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
               <div>
                 <label className={labelStyles}>Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputStyles} disabled={!isManualInput}>
+                {/* ✅ Tidak perlu name karena pakai state */}
+                <select 
+                  value={category} 
+                  onChange={(e) => setCategory(e.target.value)} 
+                  className={inputStyles} 
+                  disabled={!isManualInput}
+                >
                   <option value="Entertainment">Entertainment</option>
                   <option value="Music">Music</option>
                   <option value="Work">Productivity</option>
