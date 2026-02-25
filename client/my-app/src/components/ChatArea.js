@@ -101,11 +101,6 @@ export default function ChatArea({
             )}
           </div>
         </div>
-
-        {/* View Profile Link */}
-        <button className="text-blue-600 text-sm font-bold hover:text-blue-700 transition-colors px-4 py-2 rounded-xl hover:bg-blue-50">
-          View Profile
-        </button>
       </div>
 
       {/* Messages Area */}
