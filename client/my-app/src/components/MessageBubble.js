@@ -137,7 +137,10 @@ export default function MessageBubble({
         )}
 
         {/* Timestamp */}
-        <span className="text-[10px] text-slate-400 px-2">
+        <span
+          suppressHydrationWarning
+          className="text-[10px] text-slate-400 px-2"
+        >
           {formatTime(timestamp)}
         </span>
       </div>

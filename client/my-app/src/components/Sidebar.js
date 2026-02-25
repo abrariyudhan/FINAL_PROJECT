@@ -60,6 +60,7 @@ export default function Sidebar() {
               title={item.name}
             >
               <div
+                suppressHydrationWarning
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
                   isActive
                     ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-200"

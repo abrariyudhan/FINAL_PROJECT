@@ -48,6 +48,7 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
   return (
     <div
       onClick={onClick}
+      suppressHydrationWarning
       className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
         isActive
           ? "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm"
@@ -96,7 +97,10 @@ export default function ConversationItem({ conversation, isActive, onClick }) {
           <h3 className="font-bold text-slate-900 text-sm truncate">
             {userName || "Unknown User"}
           </h3>
-          <span className="text-[10px] text-slate-400 flex-shrink-0">
+          <span
+            suppressHydrationWarning
+            className="text-[10px] text-slate-400 flex-shrink-0"
+          >
             {formatTime(messageTime)}
           </span>
         </div>
