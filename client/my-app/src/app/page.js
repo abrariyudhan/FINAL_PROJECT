@@ -1,14 +1,11 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
 import { AppFooter } from "@/components/Footer";
 
 export default function Home() {
   return (
     <>
       {/* 1. Navbar tetap di paling atas */}
-      <Navbar />
-
       {/* 2. Berikan padding-top (pt-24) agar konten tidak tertutup Navbar */}
       <div className="pt-24 min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         

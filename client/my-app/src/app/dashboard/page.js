@@ -8,6 +8,7 @@ import Subscription from "@/server/models/Subscription";
 
 // Icons: Feather Icons
 import { FiPlus, FiActivity, FiArrowUpRight, FiClock, FiLayers, FiMessageSquare } from "react-icons/fi";
+import Navbar from "@/components/Navbar";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser()
@@ -61,41 +62,10 @@ export default async function DashboardPage() {
       <div className="max-w-7xl mx-auto">
 
         {/* --- Header: Clean & Structured --- */}
-        <header className="flex items-center justify-between mb-16 px-4">
-          <img
-  src="https://i.ibb.co.com/1tJPNJP7/Sub-Track8-cropped-removebg.png"
-  alt="SubTrack8 Logo"
-  className="
-    h-11 w-auto 
-    /* Tampilan Utama: Full Color & Glow */
-    brightness-100 invert-0 
-    opacity-100 
-    drop-shadow-[0_4px_12px_rgba(14,165,233,0.25)]
-    
-    /* Efek Hover: Sedikit Interaksi Agar Tidak Kaku */
-    hover:drop-shadow-[0_8px_20px_rgba(14,165,233,0.4)] 
-    hover:-translate-y-0.5
-    hover:scale-105
-    
-    /* Transisi */
-    transition-all duration-500 ease-in-out 
-    cursor-pointer
-  "
-/>
-          
-          <div className="flex items-center gap-8">
-            <span className="text-xs font-bold text-slate-500 tracking-widest uppercase">
-              {user?.username}
-            </span>
-            {/* Logout as Pure Text Link */}
-            <div className="text-xs font-black hover:text-red-500 transition-colors cursor-pointer uppercase tracking-widest border-b-2 border-transparent hover:border-red-500 pb-1">
-              <LogoutButton />
-            </div>
-          </div>
-        </header>
+        
 
         {/* --- Stats: Structured Boxes with Subtle Borders --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 mb-16 border border-slate-200 bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 mb-8 border border-slate-200 bg-white rounded-lg shadow-sm overflow-hidden">
           {statsConfig.map((stat, i) => (
             <div 
               key={i} 

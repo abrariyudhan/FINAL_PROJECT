@@ -60,7 +60,7 @@ export default function ChatArea({
   return (
     <div className="flex-1 bg-white flex flex-col border-l border-slate-200 overflow-hidden">
       {/* Chat Header */}
-      <div className="border-b border-slate-200 p-6 flex items-center justify-between">
+      <div className="border-b border-slate-200 p-4.5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* User/Group Avatar */}
           <div className="relative">

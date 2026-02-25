@@ -49,9 +49,9 @@ export default function MessageList({
   const tabs = ["ALL", "PEOPLE", "GROUPS"];
 
   return (
-    <div className="w-[380px] bg-white border-r border-slate-200 flex flex-col shadow-sm">
+    <div className="h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="p-6 border-b border-slate-200">
+      <div className="flex-shrink-0 p-4 border-b border-gray-200">
         <h2 className="text-2xl font-black text-slate-900 mb-1">Messages</h2>
         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
           {filteredConversations.length} Conversations
@@ -108,7 +108,7 @@ export default function MessageList({
       </div>
 
       {/* Conversation List */}
-      <div className="flex-1 overflow-y-auto px-4 py-2">
+      <div className="flex-1 overflow-y-auto">
         {activeTab === "PEOPLE" && groupMembers.length > 0 ? (
           // Show group members list in PEOPLE tab
           <div className="space-y-1">
