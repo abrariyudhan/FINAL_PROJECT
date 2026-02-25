@@ -268,6 +268,7 @@ export async function deleteSubscription(id) {
 // Buat subscription dari GroupRequest yang sudah full
 export async function setupSubscriptionFromGroup(formData) {
   let isSuccess = false
+  let newSubId = "" // ✅ Tambah variable untuk tracking
 
   try {
     const user = await getCurrentUser()
@@ -303,7 +304,7 @@ export async function setupSubscriptionFromGroup(formData) {
       userId: user.userId,
     })
 
-    const newSubId = subResult.insertedId.toString()
+    newSubId = subResult.insertedId.toString() // ✅ Simpan ID
 
     const { getDb } = await import("@/server/config/mongodb")
     const { ObjectId } = await import("mongodb")
@@ -330,6 +331,13 @@ export async function setupSubscriptionFromGroup(formData) {
       { $set: { subscriptionId: newSubId, status: "closed" } }
     )
 
+    // ✅ KIRIM WELCOME EMAIL KE OWNER + SEMUA MEMBERS
+    await inngest.send({
+      name: "app/subscription.created",
+      data: { subId: newSubId }
+    })
+
+    // ✅ SCHEDULE REMINDER JIKA AKTIF
     if (isReminderActive) {
       await inngest.send({
         name: "app/subscription.reminder",

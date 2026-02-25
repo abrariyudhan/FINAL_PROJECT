@@ -60,7 +60,7 @@ function OwnerGroupCard({ groupRequest }) {
 
         <div className="grid grid-cols-3 gap-2 pt-6 border-t border-slate-50">
           <div className="text-center border-r border-slate-50">
-            <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Slots</span>
+            <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Slots Left</span>
             <p className="text-sm font-black text-slate-900">{groupRequest.availableSlot}<span className="text-slate-300">/{groupRequest.maxSlot}</span></p>
           </div>
           <div className="text-center border-r border-slate-50">
@@ -69,7 +69,7 @@ function OwnerGroupCard({ groupRequest }) {
           </div>
           <div className="text-center">
             <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Queue</span>
-            <p className="text-sm font-black text-amber-500">{groupRequest.pendingCount}</p>
+            <p className="text-sm font-black text-amber-500">{groupRequest.pendingCount} <span className="text-slate-300 text-xs">waiting</span></p>
           </div>
         </div>
       </div>

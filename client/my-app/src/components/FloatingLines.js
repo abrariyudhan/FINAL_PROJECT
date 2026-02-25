@@ -247,6 +247,7 @@ export default function FloatingLines({
   mixBlendMode = 'screen'
 }) {
   const containerRef = useRef(null);
+  const isUnmountedRef = useRef(false);
   const targetMouseRef = useRef(new Vector2(-1000, -1000));
   const currentMouseRef = useRef(new Vector2(-1000, -1000));
   const targetInfluenceRef = useRef(0);
@@ -277,7 +278,8 @@ export default function FloatingLines({
   const bottomLineDistance = enabledWaves.includes('bottom') ? getLineDistance('bottom') * 0.01 : 0.01;
 
   useEffect(() => {
-    if (!containerRef.current) return;
+  if (!containerRef.current) return;
+  isUnmountedRef.current = false; // ✅ TAMBAH INI
 
     const scene = new Scene();
 
@@ -364,16 +366,24 @@ export default function FloatingLines({
     const clock = new Clock();
 
     const setSize = () => {
-      const el = containerRef.current;
-      const width = el.clientWidth || 1;
-      const height = el.clientHeight || 1;
+  if (isUnmountedRef.current || !containerRef.current) return; // ✅ Safety check
+  
+  try {
+    const el = containerRef.current;
+    if (!el.clientWidth || !el.clientHeight) return; // ✅ Check dimensions exist
+    
+    const width = el.clientWidth;
+    const height = el.clientHeight;
 
-      renderer.setSize(width, height, false);
+    renderer.setSize(width, height, false);
 
-      const canvasWidth = renderer.domElement.width;
-      const canvasHeight = renderer.domElement.height;
-      uniforms.iResolution.value.set(canvasWidth, canvasHeight, 1);
-    };
+    const canvasWidth = renderer.domElement.width;
+    const canvasHeight = renderer.domElement.height;
+    uniforms.iResolution.value.set(canvasWidth, canvasHeight, 1);
+  } catch (error) {
+    console.warn('Canvas resize error:', error); // ✅ Catch errors
+  }
+};
 
     setSize();
 
@@ -433,7 +443,8 @@ export default function FloatingLines({
     renderLoop();
 
     return () => {
-      cancelAnimationFrame(raf);
+  isUnmountedRef.current = true; // ✅ TAMBAH INI DI BARIS PERTAMA
+  cancelAnimationFrame(raf);
       // eslint-disable-next-line react-hooks/exhaustive-deps
       if (ro && containerRef.current) {
         ro.disconnect();

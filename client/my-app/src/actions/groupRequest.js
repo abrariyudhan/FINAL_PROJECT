@@ -16,36 +16,38 @@ import { revalidatePath } from "next/cache";
 export async function createGroupRequest(formData) {
   try {
     const user = await getCurrentUser();
-    if (!user) return { error: "Unauthorized" };
-
-    const serviceName = formData.get("serviceName");
-    const title = formData.get("title");
-    const description = formData.get("description");
-    const maxSlot = formData.get("maxSlot");
-
-    if (!serviceName || !title || !maxSlot) {
-      return { error: "Service name, title, and max slot are required" };
+    if (!user?.userId) {
+      return { error: "Unauthorized" };
     }
 
-    if (Number(maxSlot) < 1 || Number(maxSlot) > 20) {
-      return { error: "Max slot must be between 1 and 20" };
-    }
+    // ✅ Debug
+    console.log("=== SERVER ACTION DEBUG ===")
+    console.log("ServiceName:", formData.get("serviceName"))
+    console.log("Logo:", formData.get("logo"))
+    console.log("Category:", formData.get("category"))
+    console.log("ServiceId:", formData.get("serviceId"))
 
-    const masterSvc = await MasterData.findByName(serviceName);
-    const logo = masterSvc?.logo || "";
-
-    await GroupRequest.create({
+    const data = {
       ownerId: user.userId,
-      serviceName,
-      logo,
-      title,
-      description,
-      maxSlot,
-    });
+      serviceName: formData.get("serviceName"),
+      logo: formData.get("logo") || "",
+      category: formData.get("category") || "Other", // ✅ Tambahan baru
+      serviceId: formData.get("serviceId") || null,   // ✅ Tambahan baru
+      title: formData.get("title"),
+      description: formData.get("description") || "",
+      maxSlot: parseInt(formData.get("maxSlot")) || 1,
+    };
 
+    console.log("Data to save:", data)
+
+    await GroupRequest.create(data);
+
+    revalidatePath("/dashboard/explore");
     revalidatePath("/dashboard/group-requests");
+
     return { success: true };
   } catch (error) {
+    console.error("Error creating group request:", error);
     return { error: error.message || "Failed to create group request" };
   }
 }

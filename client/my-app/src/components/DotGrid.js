@@ -61,6 +61,8 @@ const DotGrid = ({
 }) => {
   const wrapperRef = useRef(null);
   const canvasRef = useRef(null);
+const animationFrameRef = useRef(null); // ✅ TAMBAH INI
+const isUnmountedRef = useRef(false); // ✅ TAMBAH INI
   const dotsRef = useRef([]);
   const pointerRef = useRef({
     x: 0,
@@ -185,6 +187,8 @@ const DotGrid = ({
   }, [buildGrid]);
 
   useEffect(() => {
+      isUnmountedRef.current = false; // ✅ TAMBAH INI
+
     const onMove = e => {
       const now = performance.now();
       const pr = pointerRef.current;
@@ -207,7 +211,9 @@ const DotGrid = ({
       pr.vy = vy;
       pr.speed = speed;
 
-      const rect = canvasRef.current.getBoundingClientRect();
+      if (!canvasRef.current || isUnmountedRef.current) return; // ✅ TAMBAH INI
+const rect = canvasRef.current.getBoundingClientRect();
+if (!rect) return; // ✅ TAMBAH INI
       pr.x = e.clientX - rect.left;
       pr.y = e.clientY - rect.top;
 
@@ -235,7 +241,9 @@ const DotGrid = ({
     };
 
     const onClick = e => {
-      const rect = canvasRef.current.getBoundingClientRect();
+  if (!canvasRef.current || isUnmountedRef.current) return; // ✅ TAMBAH INI
+  const rect = canvasRef.current.getBoundingClientRect();
+  if (!rect) return; // ✅ TAMBAH INI
       const cx = e.clientX - rect.left;
       const cy = e.clientY - rect.top;
       for (const dot of dotsRef.current) {
@@ -267,9 +275,15 @@ const DotGrid = ({
     window.addEventListener('click', onClick);
 
     return () => {
-      window.removeEventListener('mousemove', throttledMove);
-      window.removeEventListener('click', onClick);
-    };
+  isUnmountedRef.current = true; // ✅ TAMBAH INI
+  window.removeEventListener('mousemove', throttledMove);
+  window.removeEventListener('click', onClick);
+  
+  // Kill all GSAP animations
+  dotsRef.current.forEach(dot => {
+    gsap.killTweensOf(dot);
+  });
+};
   }, [maxSpeed, speedTrigger, proximity, resistance, returnDuration, shockRadius, shockStrength]);
 
   return (

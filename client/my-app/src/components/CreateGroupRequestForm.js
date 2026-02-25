@@ -41,6 +41,7 @@ export default function CreateGroupRequestForm({ masterServices }) {
     formData.append("serviceName", selectedService.serviceName)
     formData.append("serviceId", selectedService._id)
     formData.append("logo", selectedService.logo || "")
+    formData.append("category", selectedService.category || "")
     formData.append("title", title)
     formData.append("description", description)
     formData.append("maxSlot", maxSlot)

@@ -10,21 +10,21 @@ export default class MemberRequest {
 
   // Ambil semua request masuk untuk GroupRequest tertentu (untuk owner)
   static async getByGroupRequestId(groupRequestId) {
-  const collection = await this.getCollection();
-  return await collection
-    .find({ groupRequestId: new ObjectId(groupRequestId) })
-    .sort({ createdAt: -1 })
-    .toArray();
-}
+    const collection = await this.getCollection();
+    return await collection
+      .find({ groupRequestId: new ObjectId(groupRequestId) })
+      .sort({ createdAt: -1 })
+      .toArray();
+  }
 
   // Ambil semua request yang pernah dikirim user tertentu (untuk user melihat status requestnya)
   static async getByUserId(userId) {
-  const collection = await this.getCollection();
-  return await collection
-    .find({ userId: new ObjectId(userId) })
-    .sort({ createdAt: -1 })
-    .toArray();
-}
+    const collection = await this.getCollection();
+    return await collection
+      .find({ userId: new ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .toArray();
+  }
 
   // Cek apakah user sudah pernah request ke GroupRequest yang sama
   static async findExisting(userId, groupRequestId) {
@@ -57,10 +57,15 @@ export default class MemberRequest {
 
   // Ambil satu MemberRequest by ID (untuk keperluan approve, cek data user-nya)
   static async getById(id) {
-  if (!id || id.length !== 24) throw new Error("Invalid MemberRequest ID");
-  const collection = await this.getCollection();
-  const result = await collection.findOne({ _id: new ObjectId(id) });
-  if (!result) throw new NotFound("MemberRequest not found");
-  return result;
-}
+    if (!id || id.length !== 24) throw new Error("Invalid MemberRequest ID");
+    const collection = await this.getCollection();
+    const result = await collection.findOne({ _id: new ObjectId(id) });
+    if (!result) throw new NotFound("MemberRequest not found");
+    return result;
+  }
+
+  static async getAllPending() {
+    const collection = await this.getCollection();
+    return await collection.find({ status: "pending" }).toArray();
+  }
 }

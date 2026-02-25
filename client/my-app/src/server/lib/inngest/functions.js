@@ -79,7 +79,17 @@ export const sendSubscriptionReminder = inngest.createFunction(
       for (const recipient of allRecipients) {
         // --- KIRIM KE TELEGRAM ---
         if (recipient.telegramChatId) {
-          const teleText = `🔔 <b>Halo ${recipient.name}!</b>\nTagihan <b>${sub.serviceName}</b> sebesar <b>Rp ${sub.pricePaid.toLocaleString('id-ID')}</b> akan segera jatuh tempo.\n\n${recipient.isOwner ? 'Jangan lupa kumpulkan iuran!' : 'Siapkan iuran Anda!'}`
+          const teleText = `🔔 <b>Halo ${recipient.name}!</b>
+
+📋 <b>Subscription:</b> ${sub.serviceName}
+💰 <b>Total Billing:</b> Rp ${sub.pricePaid.toLocaleString('id-ID')}
+${isFamily ? `💳 <b>Your Share:</b> Rp ${pricePerPerson.toLocaleString('id-ID')} (${totalPeople} members)` : ''}
+📅 <b>Billing Date:</b> ${new Date(sub.billingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+
+${recipient.isOwner ? '💡 Jangan lupa kumpulkan iuran dari member!' : '⚠️ Siapkan iuran Anda sebelum tanggal billing!'}
+
+🔗 <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/${sub._id}">Lihat Detail</a>`
+
           await sendTelegram(recipient.telegramChatId, teleText)
         }
 
@@ -237,10 +247,10 @@ export const sendSubscriptionReminder = inngest.createFunction(
                 <strong style="display: block; margin-bottom: 8px; font-size: 15px;">
                   ${recipient.isOwner ? 'Owner Reminder' : 'Your Contribution'}
                 </strong>
-                ${recipient.isOwner 
-                  ? `Please ensure you have <strong>Rp ${pricePerPerson.toLocaleString('id-ID')}</strong> ready for the upcoming billing date. ${isFamily ? 'Don\'t forget to collect contributions from members!' : ''}` 
-                  : `Please prepare your contribution of <strong>Rp ${pricePerPerson.toLocaleString('id-ID')}</strong> before the billing date.`
-                }
+                ${recipient.isOwner
+            ? `Please ensure you have <strong>Rp ${pricePerPerson.toLocaleString('id-ID')}</strong> ready for the upcoming billing date. ${isFamily ? 'Don\'t forget to collect contributions from members!' : ''}`
+            : `Please prepare your contribution of <strong>Rp ${pricePerPerson.toLocaleString('id-ID')}</strong> before the billing date.`
+          }
               </p>
             </td>
           </tr>
@@ -398,7 +408,7 @@ export const sendWelcomeInvitation = inngest.createFunction(
 
         // Di dalam sendWelcomeInvitation function, update bagian Subscription Details Card:
 
-const htmlContent = `
+        const htmlContent = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
