@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { updateFullSubscription, deleteSubscription } from "@/actions/subscription";
 import { deleteMember } from "@/actions/member";
+import { FiPlus, FiX, FiTrash2, FiUsers, FiCreditCard, FiSettings } from "react-icons/fi";
 
 export default function EditForm({ initialSub, initialMembers, isMaster }) {
   const [newMembers, setNewMembers] = useState([])
@@ -17,11 +18,11 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
   const pricePerPerson = Math.round(price / totalOrang)
   const monthlyEquivalent = Math.round(pricePerPerson / cycle)
 
-  const inputStyles = "w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:border-sky-400 focus:ring-4 focus:ring-sky-500/5 text-sm font-bold text-slate-700 transition-all placeholder:text-slate-200 shadow-sm"
-  const labelStyles = "block text-[10px] font-black text-slate-400 uppercase mb-3 tracking-[0.2em] ml-1"
+  const inputStyles = "w-full px-4 py-3.5 bg-white border border-slate-200 rounded-md outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-sm font-bold text-slate-700 transition-all placeholder:text-slate-300 shadow-sm"
+  const labelStyles = "block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-[0.2em] ml-1"
 
   return (
-    <form action={updateFullSubscription} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+    <form action={updateFullSubscription} className="max-w-3xl mx-auto space-y-8 pb-20">
       <input type="hidden" name="id" value={initialSub._id} />
       <input type="hidden" name="type" value={initialSub.type} />
 
@@ -32,44 +33,41 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
         </>
       )}
 
-      <div className="lg:col-span-2 space-y-8">
-        <div className="bg-white p-8 md:p-10 rounded-[3rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-50 space-y-10">
+      {/* Section 1: Service Core */}
+      <div className="bg-white p-8 border border-slate-200 rounded-lg shadow-sm space-y-6">
+        <div className="flex items-center gap-3 mb-2">
+          <FiSettings className="text-slate-400" size={14} />
+          <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Service Identity</h3>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-5 group">
-
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center overflow-hidden border border-slate-100 shadow-sm shrink-0 transition-transform group-hover:rotate-3">
-                  {initialSub.logo ? (
-                    <img src={initialSub.logo} alt="" className="w-full h-full object-contain p-3" />
-                  ) : (
-                    <span className="text-xl font-black text-slate-300">{initialSub.serviceName.charAt(0)}</span>
-                  )}
-                </div>
-
-                <div className="flex-1">
-                  <label className={labelStyles}>Service Name</label>
-                  <input
-                    name={isMaster ? "" : "serviceName"}
-                    defaultValue={initialSub.serviceName}
-                    className={`w-full text-2xl font-black bg-transparent border-b-2 outline-none transition-all pb-2 ${isMaster
-                      ? "border-transparent text-slate-400 cursor-not-allowed"
-                      : "border-slate-100 text-slate-900 focus:border-sky-400"
-                      }`}
-                    required
-                    readOnly={isMaster}
-                  />
-                  {isMaster && <p className="text-[8px] font-black text-sky-500/50 uppercase tracking-[0.2em] mt-1">Verified Official Service</p>}
-                </div>
+        <div className="space-y-6">
+          <div>
+            <label className={labelStyles}>Provider Name</label>
+            <div className="flex items-center gap-4 group bg-slate-50 p-4 rounded-md border border-slate-100">
+              <div className="w-12 h-12 bg-white rounded border border-slate-200 flex items-center justify-center shrink-0">
+                {initialSub.logo ? (
+                  <img src={initialSub.logo} alt="" className="w-8 h-8 object-contain" />
+                ) : (
+                  <span className="text-lg font-black text-slate-300">{initialSub.serviceName.charAt(0)}</span>
+                )}
               </div>
+              <input
+                name={isMaster ? "" : "serviceName"}
+                defaultValue={initialSub.serviceName}
+                className={`flex-1 text-xl font-black bg-transparent outline-none ${isMaster ? "text-slate-400 cursor-not-allowed" : "text-slate-900"}`}
+                required
+                readOnly={isMaster}
+              />
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className={labelStyles}>Category</label>
+              <label className={labelStyles}>Category Class</label>
               <select
                 name={isMaster ? "" : "category"}
                 defaultValue={initialSub.category}
-                className={`${inputStyles} ${isMaster ? "opacity-60 cursor-not-allowed bg-slate-100 italic" : ""}`}
+                className={`${inputStyles} ${isMaster ? "opacity-60 cursor-not-allowed bg-slate-50 italic" : ""}`}
                 required
                 disabled={isMaster}
               >
@@ -89,190 +87,139 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
                 onChange={(e) => setCycle(Number(e.target.value))}
                 className={inputStyles}
               >
-                <option value="1">Monthly</option>
+                <option value="1">Monthly (1 Mo)</option>
                 <option value="3">Quarterly (3 Mo)</option>
                 <option value="6">Semi-Annually (6 Mo)</option>
                 <option value="12">Annually (1 Year)</option>
               </select>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-slate-50">
-            <div>
-              <label className={labelStyles}>Next Billing Date</label>
-              <input
-                name="billingDate"
-                type="date"
-                value={billingDate}
-                onChange={(e) => setBillingDate(e.target.value)}
-                className={inputStyles}
-                required
-              />
-            </div>
-            <div>
-              <label className={labelStyles}>Reminder Date</label>
-              <input
-                name="reminderDate"
-                type="date"
-                max={billingDate}
-                defaultValue={initialSub.reminderDate}
-                className={inputStyles}
-                required
-              />
-            </div>
-          </div>
-
-          {initialSub.type === "Family" && (
-            <div className="pt-4 border-t border-slate-50 space-y-8">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center px-1">
-                  <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Active Members</h3>
-                  <span className="text-[10px] font-black text-sky-500 bg-sky-50 px-3 py-1 rounded-full">{initialMembers.length} Saved</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {initialMembers.map((m) => (
-                    <div key={m._id} className="relative flex flex-col p-5 bg-slate-50/50 border border-slate-100 rounded-[2rem] hover:border-sky-200 transition-all group">
-                      {/* Hidden ID agar server tahu ini UPDATE bukan CREATE */}
-                      <input type="hidden" name="memberId[]" value={m._id.toString()} />
-                      
-                      <button
-                        type="button"
-                        onClick={async () => { if (confirm(`Remove ${m.name}?`)) await deleteMember(m._id, initialSub._id); }}
-                        className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors z-10"
-                      >
-                        ✕
-                      </button>
-
-                      <div className="space-y-3 pr-6">
-                        <div>
-                          <input 
-                            name="memberName[]" 
-                            defaultValue={m.name} 
-                            placeholder="Name"
-                            className="w-full bg-transparent border-none p-0 text-sm font-black text-slate-700 focus:ring-0 placeholder:text-slate-300"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <input 
-                            name="memberEmail[]" 
-                            defaultValue={m.email || ""} 
-                            placeholder="Email Address"
-                            className="w-full bg-transparent border-none p-0 text-[10px] text-slate-400 font-bold focus:ring-0 uppercase tracking-tight placeholder:text-slate-200"
-                          />
-                          <input 
-                            name="memberPhone[]" 
-                            defaultValue={m.phone || ""} 
-                            placeholder="Phone Number"
-                            className="w-full bg-transparent border-none p-0 text-[10px] text-slate-400 font-bold focus:ring-0 uppercase tracking-tight placeholder:text-slate-200"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex justify-between items-center px-1">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Add New Members</h3>
-                  <button type="button" onClick={addNewMemberRow} className="px-4 py-2 bg-sky-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-sky-100">+ Add Row</button>
-                </div>
-                <div className="space-y-3">
-                  {newMembers.map((m) => (
-                    <div key={m.id} className="grid grid-cols-1 md:grid-cols-10 gap-3 p-4 bg-white rounded-2xl border-2 border-dashed border-slate-100 items-center animate-in zoom-in-95">
-                      <input type="hidden" name="memberId[]" value="" />
-                      <div className="md:col-span-3">
-                        <input name="memberName[]" placeholder="Name" className={inputStyles + " p-2.5"} required />
-                      </div>
-                      <div className="md:col-span-3">
-                        <input name="memberEmail[]" placeholder="Email" className={inputStyles + " p-2.5"} />
-                      </div>
-                      <div className="md:col-span-3">
-                        <input name="memberPhone[]" placeholder="Phone" className={inputStyles + " p-2.5"} />
-                      </div>
-                      <div className="md:col-span-1 flex justify-center">
-                        <button type="button" onClick={() => removeNewMemberRow(m.id)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors">✕</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-start px-4">
-          <button
-            type="button"
-            onClick={() => { if (confirm("Delete this entire subscription?")) deleteSubscription(initialSub._id) }}
-            className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:text-rose-500 transition-colors"
-          >
-            Delete Subscription
-          </button>
         </div>
       </div>
 
-      <div className="lg:sticky lg:top-10 space-y-6">
-        <div className="bg-slate-900 p-8 rounded-[3rem] text-white shadow-2xl shadow-slate-200 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
+      {/* Section 2: Financials */}
+      <div className="bg-slate-900 p-8 rounded-lg shadow-xl text-white space-y-8">
+        <div className="flex items-center gap-3">
+          <FiCreditCard className="text-blue-500" size={14} />
+          <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Financial Summary</h3>
+        </div>
 
-          <div className="relative z-10 space-y-8">
-            <div>
-              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4">Live Summary</label>
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest">Update Price</span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-xl font-black text-slate-500 tracking-tighter uppercase">IDR</span>
-                  <input
-                    name="pricePaid"
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(Number(e.target.value))}
-                    className="bg-transparent text-4xl font-black text-white outline-none w-full tracking-tighter"
-                    required
-                  />
-                </div>
-              </div>
+        <div className="space-y-4">
+          <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Total Price (IDR)</label>
+          <input
+            name="pricePaid"
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(Number(e.target.value))}
+            className="bg-transparent text-4xl font-black text-white outline-none w-full tracking-tighter border-b border-slate-800 focus:border-blue-600 pb-2 transition-colors"
+            required
+          />
+          
+          <div className="grid grid-cols-2 gap-4 pt-4">
+            <div className="bg-white/5 p-4 rounded-md">
+              <span className="block text-[9px] font-black text-slate-500 uppercase">Cost Per Head</span>
+              <span className="text-lg font-black tracking-tight">Rp {pricePerPerson.toLocaleString('id-ID')}</span>
             </div>
-
-            <div className="pt-8 border-t border-slate-800 space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black text-slate-400 uppercase">
-                  {initialSub.type === "Family" ? "Your Share:" : "Total Cost:"}
-                </span>
-                <span className="text-xl font-black text-emerald-400">
-                  Rp {initialSub.type === "Family" ? pricePerPerson.toLocaleString('id-ID') : price.toLocaleString('id-ID')}
-                </span>
-              </div>
-              {cycle > 1 && (
-                <div className="flex justify-between items-center opacity-60">
-                  <span className="text-[10px] font-black text-slate-400 uppercase">Monthly Eq:</span>
-                  <span className="text-sm font-black italic text-emerald-400">
-                    Rp {(initialSub.type === "Family" ? monthlyEquivalent : Math.round(price / cycle)).toLocaleString('id-ID')}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-2">
-              <div className="flex items-center gap-3 mb-6 p-3 bg-white/5 rounded-xl border border-white/5 group cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="isReminderActive"
-                  id="isReminderActive"
-                  defaultChecked={initialSub.isReminderActive}
-                  className="w-5 h-5 text-sky-500 rounded bg-transparent border-slate-700 focus:ring-0 cursor-pointer"
-                />
-                <label htmlFor="isReminderActive" className="text-[9px] font-black text-slate-300 uppercase tracking-widest cursor-pointer select-none">Smart Reminder</label>
-              </div>
-
-              <button type="submit" className="w-full bg-sky-500 text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] hover:bg-sky-400 transition-all shadow-xl shadow-sky-900/20 active:scale-95">
-                Update Subscription
-              </button>
+            <div className="bg-white/5 p-4 rounded-md">
+              <span className="block text-[9px] font-black text-slate-500 uppercase">Monthly Burn</span>
+              <span className="text-lg font-black text-blue-400 tracking-tight">Rp {monthlyEquivalent.toLocaleString('id-ID')}</span>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Section 3: Schedule */}
+      <div className="bg-white p-8 border border-slate-200 rounded-lg shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className={labelStyles}>Renewal Date</label>
+          <input
+            name="billingDate"
+            type="date"
+            value={billingDate}
+            onChange={(e) => setBillingDate(e.target.value)}
+            className={inputStyles}
+            required
+          />
+        </div>
+        <div>
+          <label className={labelStyles}>Alert Trigger</label>
+          <input
+            name="reminderDate"
+            type="date"
+            max={billingDate}
+            defaultValue={initialSub.reminderDate}
+            className={inputStyles}
+            required
+          />
+        </div>
+      </div>
+
+      {/* Section 4: Family Ledger (If applicable) */}
+      {initialSub.type === "Family" && (
+        <div className="bg-white p-8 border border-slate-200 rounded-lg shadow-sm space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+              <FiUsers className="text-blue-600" /> Subscription Group
+            </h3>
+            <button type="button" onClick={addNewMemberRow} className="text-[10px] font-black text-blue-600 uppercase border-b-2 border-blue-600 pb-0.5 hover:text-blue-800 transition-all">
+              Add Member
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {initialMembers.map((m) => (
+              <div key={m._id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-md border border-slate-100">
+                <input type="hidden" name="memberId[]" value={m._id.toString()} />
+                <div className="flex-1 grid grid-cols-2 gap-4">
+                  <input name="memberName[]" defaultValue={m.name} className="bg-transparent font-bold text-sm outline-none" placeholder="NAME" required />
+                  <input name="memberEmail[]" defaultValue={m.email || ""} className="bg-transparent text-xs text-slate-500 outline-none" placeholder="EMAIL" />
+                </div>
+                <button type="button" onClick={async () => { if (confirm(`Remove ${m.name}?`)) await deleteMember(m._id, initialSub._id); }} className="text-slate-300 hover:text-rose-500">
+                  <FiX size={16} strokeWidth={3} />
+                </button>
+              </div>
+            ))}
+
+            {newMembers.map((m) => (
+              <div key={m.id} className="flex items-center gap-4 p-4 border border-dashed border-slate-200 rounded-md">
+                <input type="hidden" name="memberId[]" value="" />
+                <div className="flex-1 grid grid-cols-2 gap-4">
+                  <input name="memberName[]" className="bg-transparent font-bold text-sm outline-none" placeholder="NEW NAME" required />
+                  <input name="memberEmail[]" className="bg-transparent text-xs text-slate-500 outline-none" placeholder="NEW EMAIL" />
+                </div>
+                <button type="button" onClick={() => removeNewMemberRow(m.id)} className="text-slate-300 hover:text-rose-500">
+                  <FiX size={16} strokeWidth={3} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 p-4 bg-slate-100 rounded-md">
+          <input
+            type="checkbox"
+            name="isReminderActive"
+            id="isReminderActive"
+            defaultChecked={initialSub.isReminderActive}
+            className="w-5 h-5 text-slate-900 rounded border-slate-300 focus:ring-0 cursor-pointer"
+          />
+          <label htmlFor="isReminderActive" className="text-[10px] font-black text-slate-500 uppercase tracking-widest cursor-pointer select-none">Enable Automated Notifications</label>
+        </div>
+
+        <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white py-5 rounded-md font-black text-[12px] uppercase tracking-[0.2em] transition-all shadow-xl">
+          Commit Changes
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { if (confirm("Destructive Action: Permanent removal of this registry?")) deleteSubscription(initialSub._id) }}
+          className="w-full flex justify-center items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:text-rose-600 py-2 transition-colors"
+        >
+          <FiTrash2 /> Delete Subscription
+        </button>
       </div>
     </form>
   )

@@ -1,32 +1,33 @@
 import Link from "next/link";
 import { differenceInDays, startOfDay, format } from "date-fns";
+import { FiChevronRight } from "react-icons/fi";
 
 export default function SubTable({ subscriptions, today }) {
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden">
+    <div className="w-full overflow-hidden bg-white">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-10 py-6 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">Service Details</th>
-              <th className="px-6 py-6 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] text-center">Cycle</th>
-              <th className="px-6 py-6 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] text-center">Payment Status</th>
-              <th className="px-6 py-6 text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] text-right">Amount</th>
-              <th className="px-10 py-6"></th>
+            <tr className="border-b border-slate-200 bg-slate-50/50">
+              <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Service Details</th>
+              <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Cycle</th>
+              <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Status</th>
+              <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Amount</th>
+              <th className="px-8 py-5"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody className="divide-y divide-slate-100">
             {subscriptions.map((sub) => {
-              const billDate = startOfDay(new Date(sub.billingDate))
-              const diffDays = differenceInDays(billDate, today)
+              const billDate = startOfDay(new Date(sub.billingDate));
+              const diffDays = differenceInDays(billDate, today);
 
               return (
-                <tr key={sub._id.toString()} className="hover:bg-slate-50/30 transition-all group">
-                  <td className="px-10 py-6">
-                    <div className="flex items-center gap-5">
-                      
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden transition-transform group-hover:scale-110 duration-300 ${
-                        !sub.logo ? (diffDays < 0 ? 'bg-rose-50 text-rose-400 border border-rose-100' : 'bg-slate-900 text-white shadow-lg shadow-slate-200') : 'bg-white border border-slate-100'
+                <tr key={sub._id.toString()} className="hover:bg-slate-50/50 transition-colors group">
+                  {/* Service Details */}
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-11 h-11 rounded border flex items-center justify-center overflow-hidden flex-shrink-0 ${
+                        !sub.logo ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200'
                       }`}>
                         {sub.logo ? (
                           <img 
@@ -35,21 +36,21 @@ export default function SubTable({ subscriptions, today }) {
                             className="w-full h-full object-contain p-2"
                           />
                         ) : (
-                          <span className="font-black text-base uppercase">
+                          <span className="font-black text-xs uppercase">
                             {sub.serviceName.charAt(0)}
                           </span>
                         )}
                       </div>
 
                       <div className="min-w-0">
-                        <p className="font-black text-slate-800 text-sm group-hover:text-sky-500 transition-colors truncate">
+                        <p className="font-black text-slate-900 text-sm tracking-tight truncate uppercase">
                           {sub.serviceName}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider italic">
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                             {sub.category}
                           </span>
-                          <span className="text-[9px] text-sky-400 font-black uppercase tracking-widest leading-none">
+                          <span className="text-[10px] text-[#0099FF] font-black uppercase tracking-widest">
                             • {sub.type || 'Individual'}
                           </span>
                         </div>
@@ -57,55 +58,59 @@ export default function SubTable({ subscriptions, today }) {
                     </div>
                   </td>
 
+                  {/* Cycle */}
                   <td className="px-6 py-6 text-center">
-                    <span className="inline-block text-[10px] font-black text-slate-500 bg-slate-100/50 px-3 py-1.5 rounded-xl uppercase tracking-tight border border-slate-100">
+                    <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-3 py-1 rounded-sm uppercase tracking-tighter border border-slate-200">
                       {sub.billingCycle === 1 ? 'Monthly' : `${sub.billingCycle} Months`}
                     </span>
                   </td>
 
+                  {/* Status: Structured with Underlines instead of Bulky Pills */}
                   <td className="px-6 py-6 text-center">
-                    {diffDays === 0 ? (
-                      <span className="bg-orange-50 text-orange-500 border border-orange-100 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest">
+                    {diffDays === 0 && (
+                      <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 border-b-2 border-orange-200 pb-0.5">
                         Due Today
                       </span>
-                    ) : diffDays > 0 ? (
-                      <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
-                        diffDays <= 3
-                          ? "bg-rose-50 text-rose-500 border-rose-100 animate-pulse"
-                          : "bg-emerald-50 text-emerald-500 border-emerald-100"
+                    )}
+                    {diffDays > 0 && (
+                      <span className={`text-[10px] font-black uppercase tracking-widest pb-0.5 border-b-2 ${
+                        diffDays <= 3 ? "text-rose-600 border-rose-200" : "text-emerald-600 border-emerald-200"
                       }`}>
                         {diffDays} Days Left
                       </span>
-                    ) : (
-                      <span className="bg-slate-50 text-slate-300 border border-slate-100 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest italic">
+                    )}
+                    {diffDays < 0 && (
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 italic">
                         Overdue
                       </span>
                     )}
                   </td>
 
+                  {/* Amount */}
                   <td className="px-6 py-6 text-right">
                     <p className="text-sm font-black text-slate-900 tracking-tight">
                       Rp {sub.pricePaid?.toLocaleString("id-ID") || 0}
                     </p>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.1em] mt-1">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">
                       {diffDays < 0 ? 'Expired' : 'Next bill'}: {format(billDate, 'dd MMM')}
                     </p>
                   </td>
 
-                  <td className="px-10 py-6 text-right">
-                    <Link href={`/dashboard/${sub._id.toString()}`}
-                      className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:bg-sky-500 hover:text-white transition-all shadow-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
+                  {/* Action Link: Sharp Industrial Style */}
+                  <td className="px-8 py-6 text-right">
+                    <Link 
+                      href={`/dashboard/${sub._id.toString()}`}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200 text-slate-400 hover:border-slate-900 hover:text-slate-900 transition-all bg-white shadow-sm"
+                    >
+                      <FiChevronRight strokeWidth={3} size={14} />
                     </Link>
                   </td>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
       </div>
     </div>
-  )
+  );
 }

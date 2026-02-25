@@ -6,6 +6,7 @@ import ManageGroupRequestClient from "@/components/ManageGroupRequestClient";
 export default async function ManageGroupRequestPage({ params }) {
   const { id } = await params
   const user = await getCurrentUser()
+  
   if (!user) redirect("/login")
 
   try {
@@ -13,18 +14,19 @@ export default async function ManageGroupRequestPage({ params }) {
     const { ObjectId } = await import("mongodb")
     const db = await getDb()
 
+    // Fetch primary group data
     const groupRequest = await db.collection("groupRequests").findOne({
       _id: new ObjectId(id)
     })
 
     if (!groupRequest) redirect("/dashboard/group-requests")
 
+    // Authorization check: Only owner can access this management page
     if (groupRequest.ownerId.toString() !== user.userId) {
       redirect("/dashboard/explore")
     }
 
-    // Ambil MemberRequest lalu enrich dengan data user secara manual
-    // (hindari aggregate $unwind yang bisa error jika userId tidak match)
+    // Fetch incoming member requests and enrich with user profiles
     const rawMemberRequests = await db.collection("memberRequests")
       .find({ groupRequestId: new ObjectId(id) })
       .sort({ createdAt: -1 })
@@ -42,9 +44,10 @@ export default async function ManageGroupRequestPage({ params }) {
       })
     )
 
-    // Ambil master services untuk edit modal
+    // Fetch available master services for editing purposes
     const services = await MasterData.findAll()
 
+    // Pass data to the Client Component for UI rendering
     return (
       <ManageGroupRequestClient
         groupRequest={JSON.parse(JSON.stringify(groupRequest))}
