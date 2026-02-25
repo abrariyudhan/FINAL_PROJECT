@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { loginUser } from "@/actions/auth"
 import Swal from "sweetalert2"
 import Link from "next/link"
+import FloatingLines from "@/components/FloatingLines"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -135,36 +136,58 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-md">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-[#050505] overflow-hidden p-4">
+      
+      {/* BACKGROUND */}
+      <div className="absolute inset-0 z-0 opacity-20">
+        <FloatingLines 
+          enabledWaves={["top","middle","bottom"]}
+          lineCount={10}
+          lineDistance={15}
+          interactive={true}
+        />
+      </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-black tracking-tight text-slate-900">
-            Login <span className="text-sky-500">Your Account</span>
+      <div className="relative z-10 w-full max-w-[400px]">
+        
+        {/* WELCOME TEXT (Top) */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-black text-white tracking-tighter">
+            Welcome <span className="text-sky-500">Back</span>
           </h1>
-          <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">
-            Sign in to manage your subscriptions
-          </p>
         </div>
 
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        {/* COMPACT CARD */}
+        <div className="backdrop-blur-3xl bg-white/[0.02] rounded-[2.5rem] border border-white/10 shadow-2xl p-8">
+          
+          {/* HUGE LOGO SECTION */}
+          <div className="flex justify-center mb-10">
+            <div className="relative group">
+              <div className="absolute inset-0 transition-all duration-500"></div>
+              <img 
+                src="white.png" 
+                alt="Sub Track8 Logo" 
+                className="relative h-15 w-auto scale-125 drop-shadow-[0_0_15px_rgba(14,165,233,0.4)] transition-transform duration-500 group-hover:scale-[1.35]" 
+              />
+            </div>
+          </div>
 
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
-                Email Address
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                Email address
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                placeholder="Enter your email address"
+                className="w-full px-5 py-3.5 rounded-xl border border-white/10 bg-white/[0.04] text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all placeholder:text-slate-400"
               />
             </div>
 
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                 Password
               </label>
               <input
@@ -172,38 +195,41 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-900 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all"
+                className="w-full px-5 py-3.5 rounded-xl border border-white/10 bg-white/[0.04] text-white text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all placeholder:text-slate-400"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-900 hover:bg-sky-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-sky-500 hover:bg-sky-400 text-white py-3.5 rounded-full font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-sky-500/20 active:scale-[0.98] disabled:opacity-50 mt-4"
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? "Verifying..." : "Sign In to Account"}
             </button>
           </form>
 
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-slate-100"></div>
-            <span className="px-4 text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
-              Or
-            </span>
-            <div className="flex-1 border-t border-slate-100"></div>
+          <div className="relative flex items-center my-6">
+            <div className="flex-1 border-t border-white/5"></div>
+            <span className="px-3 text-[8px] font-bold text-slate-700 uppercase tracking-widest">Or Secure Login With</span>
+            <div className="flex-1 border-t border-white/5"></div>
           </div>
 
-          <div className="flex justify-center">
+          {/* GOOGLE BUTTON - Menyesuaikan Lebar Form */}
+          <div className="flex justify-center transition-transform hover:scale-[1.02]">
             <div id="google-btn"></div>
           </div>
 
-          <p className="text-center text-sm text-slate-400 mt-6">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-sky-500 font-bold hover:text-sky-600 transition-colors">
+          <p className="text-center text-[11px] text-slate-500 mt-8">
+            Don't have an account?{" "}
+            <Link href="/register" className="text-sky-400 font-bold hover:text-white transition-colors">
               Sign Up
             </Link>
           </p>
         </div>
+
+        <p className="text-center mt-6 text-[8px] text-slate-800 font-bold uppercase tracking-[0.4em]">
+          Sub-Track8 Cloud Systems &bull; 2026
+        </p>
       </div>
     </div>
   )
