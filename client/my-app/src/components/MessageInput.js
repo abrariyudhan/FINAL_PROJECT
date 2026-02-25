@@ -75,13 +75,13 @@ export default function MessageInput({ onSendMessage, onUploadFile }) {
   };
 
   return (
-    <div className="border-t border-blue-100 p-4 bg-white">
+    <div className="border-t border-slate-200 p-4 bg-white">
       <div className="flex items-end gap-3">
         {/* Upload File Button */}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-600 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 border border-blue-100"
+          className="w-10 h-10 rounded-lg bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 border border-slate-200"
           title="Upload files"
         >
           {isUploading ? (
@@ -134,7 +134,7 @@ export default function MessageInput({ onSendMessage, onUploadFile }) {
         />
 
         {/* Text Input */}
-        <div className="flex-1 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+        <div className="flex-1 bg-white rounded-lg border border-slate-200 focus-within:border-slate-300 focus-within:ring-1 focus-within:ring-slate-300 transition-all">
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -150,7 +150,7 @@ export default function MessageInput({ onSendMessage, onUploadFile }) {
         <button
           onClick={handleSend}
           disabled={!message.trim() || isUploading}
-          className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-200 active:scale-95 flex-shrink-0"
+          className="w-10 h-10 rounded-lg bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 flex-shrink-0"
           title="Send message"
         >
           <svg
