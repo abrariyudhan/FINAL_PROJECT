@@ -1,0 +1,17 @@
+[00:00:04.211] Server  LOG     ✓ Ready in 2.9s
+[00:01:19.487] Server  LOG     ○ Compiling /dashboard ...
+[00:01:25.566] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:24.030] Server  ERROR   UNHANDLED ERROR: Error: Inngest API Error: 401 Event key not found
+[00:02:32.232] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:39.076] Server  ERROR   ⨯ TypeError: Cannot read properties of null (reading 'charAt')
+[00:02:39.084] Server  ERROR   ⨯ TypeError: Cannot read properties of null (reading 'charAt')
+[00:02:39.340] Browser ERROR   uncaughtError: TypeError: Cannot read properties of null (reading 'charAt')
+[00:02:48.257] Server  ERROR   ⨯ TypeError: Cannot read properties of null (reading 'charAt')
+[00:02:48.268] Server  ERROR   ⨯ TypeError: Cannot read properties of null (reading 'charAt')
+[00:02:48.752] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:48.946] Browser ERROR   uncaughtError: TypeError: Cannot read properties of null (reading 'charAt')
+[00:03:01.997] Server  ERROR   ⨯ TypeError: Cannot read properties of null (reading 'charAt')
+[00:03:02.003] Server  ERROR   ⨯ TypeError: Cannot read properties of null (reading 'charAt')
+[00:03:02.473] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:03:02.682] Browser ERROR   uncaughtError: TypeError: Cannot read properties of null (reading 'charAt')
+[01:02:14.657] Server  LOG     ✓ Compiled in 8.3s
