@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 28, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/USER/OneDrive/Dokumen/Hacktiv8/phase%203/FINAL_PROJECT/client/my-app/src/server/helpers/jwt.js"],"sourcesContent":["import jwt from \"jsonwebtoken\"\r\n\r\nconst SECRET_KEY = process.env.SECRET_KEY || \"kukukakikukaku\"\r\n\r\n\r\nexport function signToken(payload) {\r\n  return jwt.sign(payload, SECRET_KEY)\r\n}\r\n\r\nexport function verifyToken(token) {\r\n  return jwt.verify(token, SECRET_KEY)\r\n}"],"names":[],"mappings":";;;;;;AAAA;;AAEA,MAAM,aAAa,QAAQ,GAAG,CAAC,UAAU,IAAI;AAGtC,SAAS,UAAU,OAAO;IAC/B,OAAO,uOAAG,CAAC,IAAI,CAAC,SAAS;AAC3B;AAEO,SAAS,YAAY,KAAK;IAC/B,OAAO,uOAAG,CAAC,MAAM,CAAC,OAAO;AAC3B"}}]
+}

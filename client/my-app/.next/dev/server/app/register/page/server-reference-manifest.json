@@ -1,0 +1,20 @@
+{
+  "node": {
+    "402065b2e3175b3d7d8d533f85db7dc7e92c1d1e5e": {
+      "workers": {
+        "app/register/page": {
+          "moduleId": "[project]/OneDrive/Dokumen/Hacktiv8/phase 3/FINAL_PROJECT/client/my-app/.next-internal/server/app/register/page/actions.js { ACTIONS_MODULE0 => \"[project]/OneDrive/Dokumen/Hacktiv8/phase 3/FINAL_PROJECT/client/my-app/src/actions/auth.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "registerUser",
+          "filename": "OneDrive/Dokumen/Hacktiv8/phase 3/FINAL_PROJECT/client/my-app/src/actions/auth.js"
+        }
+      },
+      "layer": {
+        "app/register/page": "action-browser"
+      },
+      "exportedName": "registerUser",
+      "filename": "OneDrive/Dokumen/Hacktiv8/phase 3/FINAL_PROJECT/client/my-app/src/actions/auth.js"
+    }
+  },
+  "edge": {}
+}

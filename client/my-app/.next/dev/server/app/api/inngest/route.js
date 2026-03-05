@@ -1,0 +1,13 @@
+var R=require("../../../chunks/[turbopack]_runtime.js")("server/app/api/inngest/route.js")
+R.c("server/chunks/[root-of-the-server]__12d8f236._.js")
+R.c("server/chunks/f06ff_next_dist_687cdbc8._.js")
+R.c("server/chunks/f06ff_@opentelemetry_api_build_esm_29b26e17._.js")
+R.c("server/chunks/f06ff_inngest_7866e4c7._.js")
+R.c("server/chunks/c070c_zod_v3_0ee3473a._.js")
+R.c("server/chunks/f06ff_postal-mime_src_da5cd5e2._.js")
+R.c("server/chunks/f06ff_svix_dist_fc213015._.js")
+R.c("server/chunks/[root-of-the-server]__eec61d26._.js")
+R.c("server/chunks/[root-of-the-server]__780133c1._.js")
+R.c("server/chunks/2c38a_client_my-app__next-internal_server_app_api_inngest_route_actions_f6f846d2.js")
+R.m("[project]/OneDrive/Dokumen/Hacktiv8/phase 3/FINAL_PROJECT/client/my-app/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/OneDrive/Dokumen/Hacktiv8/phase 3/FINAL_PROJECT/client/my-app/src/app/api/inngest/route.js [app-route] (ecmascript)\" } [app-route] (ecmascript)")
+module.exports=R.m("[project]/OneDrive/Dokumen/Hacktiv8/phase 3/FINAL_PROJECT/client/my-app/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/OneDrive/Dokumen/Hacktiv8/phase 3/FINAL_PROJECT/client/my-app/src/app/api/inngest/route.js [app-route] (ecmascript)\" } [app-route] (ecmascript)").exports
