@@ -4,6 +4,7 @@ import { useState } from "react";
 import { updateFullSubscription, deleteSubscription } from "@/actions/subscription";
 import { deleteMember } from "@/actions/member";
 import { FiPlus, FiX, FiTrash2, FiUsers, FiCreditCard, FiSettings } from "react-icons/fi";
+import Swal from "sweetalert2";
 
 export default function EditForm({ initialSub, initialMembers, isMaster }) {
   const [newMembers, setNewMembers] = useState([])
@@ -174,7 +175,27 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
                   <input name="memberName[]" defaultValue={m.name} className="bg-transparent font-bold text-sm outline-none" placeholder="NAME" required />
                   <input name="memberEmail[]" defaultValue={m.email || ""} className="bg-transparent text-xs text-slate-500 outline-none" placeholder="EMAIL" />
                 </div>
-                <button type="button" onClick={async () => { if (confirm(`Remove ${m.name}?`)) await deleteMember(m._id, initialSub._id); }} className="text-slate-300 hover:text-rose-500">
+                <button 
+  type="button" 
+  onClick={async () => {
+    const result = await Swal.fire({
+      title: `Remove ${m.name}?`,
+      text: "This member will be permanently removed from the subscription",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, remove',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (result.isConfirmed) {
+      await deleteMember(m._id, initialSub._id);
+      Swal.fire('Removed!', 'Member has been removed.', 'success');
+    }
+  }} 
+  className="text-slate-300 hover:text-rose-500"
+>
                   <FiX size={16} strokeWidth={3} />
                 </button>
               </div>
@@ -214,10 +235,26 @@ export default function EditForm({ initialSub, initialMembers, isMaster }) {
         </button>
 
         <button
-          type="button"
-          onClick={() => { if (confirm("Destructive Action: Permanent removal of this registry?")) deleteSubscription(initialSub._id) }}
-          className="w-full flex justify-center items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:text-rose-600 py-2 transition-colors"
-        >
+  type="button"
+  onClick={async () => {
+    const result = await Swal.fire({
+      title: 'Delete Subscription?',
+      html: `<p class="text-sm text-slate-600">This will permanently delete <strong>${initialSub.serviceName}</strong> and all associated data.</p>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel',
+      focusCancel: true
+    });
+    
+    if (result.isConfirmed) {
+      await deleteSubscription(initialSub._id);
+    }
+  }}
+  className="w-full flex justify-center items-center gap-2 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:text-rose-600 py-2 transition-colors"
+>
           <FiTrash2 /> Delete Subscription
         </button>
       </div>

@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { getDb } from "../config/mongodb";
 import { hashPassword } from "../helpers/bcrypt";
 
@@ -66,14 +67,13 @@ export default class User {
     }
 
     static async getUserById(id) {
-        const { ObjectId } = await import("mongodb")
         const collection = await this.getCollection()
         return collection.findOne({ _id: new ObjectId(id) })
     }
 
     static async findOrCreateGoogleUser({ name, email, avatar }) {
         const collection = await this.getCollection()
-        
+
         let user = await collection.findOne({ email: email.trim().toLowerCase() })
 
         if (!user) {
@@ -101,4 +101,13 @@ export default class User {
 
         return user
     }
+
+    static async updateTelegramId(userId, chatId) {
+        const collection = await this.getCollection()
+        return await collection.updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: { telegramChatId: chatId.toString() } }
+        )
+    }
+
 }

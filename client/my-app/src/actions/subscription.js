@@ -24,8 +24,12 @@ export async function createFullSubscription(formData) {
     const reminderDate = formData.get("reminderDate")
     const billingCycle = Number(formData.get("billingCycle")) || 1
 
-    const masterSvc = await MasterData.findByName(serviceName);
-    const logoUrl = masterSvc ? masterSvc.logo : "";
+    // --- FIX LOGO: Prioritaskan logo dari form (hasil scan/state) ---
+    let logoUrl = formData.get("logo"); 
+    if (!logoUrl) {
+      const masterSvc = await MasterData.findByName(serviceName);
+      logoUrl = masterSvc ? masterSvc.logo : "";
+    }
 
     if (new Date(reminderDate) > new Date(billingDate)) {
       throw new Error("The reminder date must not be later than the billing date.")
@@ -75,28 +79,29 @@ export async function createFullSubscription(formData) {
         }
       }
 
-      // PASTIKAN SEMUA MEMBER SELESAI DISIMPAN SEBELUM LANJUT
       if (memberPromises.length > 0) {
         await Promise.all(memberPromises)
       }
     }
 
-    // 3. KIRIM EVENT KE INNGEST (SETELAH SEMUA DATA DB SIAP)
-    // Kirim event Welcome/Invitation ke Owner dan Member
-    await inngest.send({
-      name: "app/subscription.created",
-      data: { subId: newSubId }
-    })
-
-    // Kirim event Reminder jika aktif
-    if (subData.isReminderActive) {
+    // 3. KIRIM EVENT KE INNGEST (Dibungkus try-catch agar tidak memicu 500 Error jika Key Inngest belum ada)
+    try {
       await inngest.send({
-        name: "app/subscription.reminder",
-        data: {
-          subId: newSubId,
-          reminderDate: subData.reminderDate,
-        },
+        name: "app/subscription.created",
+        data: { subId: newSubId }
       })
+
+      if (subData.isReminderActive) {
+        await inngest.send({
+          name: "app/subscription.reminder",
+          data: {
+            subId: newSubId,
+            reminderDate: subData.reminderDate,
+          },
+        })
+      }
+    } catch (inngestErr) {
+      console.warn("Inngest warning: Event not sent. Check your INNGEST_EVENT_KEY.", inngestErr.message);
     }
 
     revalidatePath("/dashboard")
@@ -125,8 +130,12 @@ export async function updateFullSubscription(formData) {
     const reminderDate = formData.get("reminderDate")
     const billingCycle = Number(formData.get("billingCycle")) || 1
 
-    const masterSvc = await MasterData.findByName(serviceName)
-    const logoUrl = masterSvc ? masterSvc.logo : ""
+    // --- FIX LOGO UPDATE ---
+    let logoUrl = formData.get("logo");
+    if (!logoUrl) {
+      const masterSvc = await MasterData.findByName(serviceName)
+      logoUrl = masterSvc ? masterSvc.logo : ""
+    }
 
     if (new Date(reminderDate) > new Date(billingDate)) {
       throw new Error("The reminder date must not be later than the billing date.")
@@ -145,10 +154,8 @@ export async function updateFullSubscription(formData) {
       userId: user.userId,
     }
 
-    // Update data utama
     await Subscription.update(id, user.userId, updatedData)
 
-    // Handle Update/Tambah Member
     const memberIds = formData.getAll("memberId[]")
     const memberNames = formData.getAll("memberName[]")
     const memberEmails = formData.getAll("memberEmail[]")
@@ -174,7 +181,6 @@ export async function updateFullSubscription(formData) {
             phone: phone,
           }))
         } else {
-          // Member baru langsung di-await karena kita butuh ID-nya untuk Inngest
           const memberResult = await Member.create({
             subscriptionId: id,
             name: name,
@@ -183,14 +189,15 @@ export async function updateFullSubscription(formData) {
             userId: null,
           })
 
-          // Kirim welcome hanya untuk member baru
-          await inngest.send({
-            name: "app/subscription.created",
-            data: {
-              subId: id,
-              specificMemberId: memberResult.insertedId.toString()
-            }
-          })
+          try {
+            await inngest.send({
+              name: "app/subscription.created",
+              data: {
+                subId: id,
+                specificMemberId: memberResult.insertedId.toString()
+              }
+            })
+          } catch (e) {}
         }
       }
     }
@@ -199,31 +206,17 @@ export async function updateFullSubscription(formData) {
       await Promise.all(memberUpdatePromises)
     }
 
-    // LOGIKA INNGEST REMINDER
     try {
       if (!isReminderActive && existingSub.isReminderActive) {
-        await inngest.send({
-          name: "app/subscription.reminder.cancel",
-          data: { subId: id }
-        })
+        await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
       }
       else if (isReminderActive && !existingSub.isReminderActive) {
-        await inngest.send({
-          name: "app/subscription.reminder",
-          data: { subId: id, reminderDate: reminderDate },
-        })
+        await inngest.send({ name: "app/subscription.reminder", data: { subId: id, reminderDate: reminderDate } })
       }
       else if (isReminderActive && existingSub.reminderDate !== reminderDate) {
-        await inngest.send({
-          name: "app/subscription.reminder.cancel",
-          data: { subId: id }
-        })
-        // Jeda kecil agar pembatalan diproses lebih dulu
+        await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
         await new Promise(resolve => setTimeout(resolve, 150))
-        await inngest.send({
-          name: "app/subscription.reminder",
-          data: { subId: id, reminderDate: reminderDate },
-        })
+        await inngest.send({ name: "app/subscription.reminder", data: { subId: id, reminderDate: reminderDate } })
       }
     } catch (inngestError) {
       console.error("Inngest event error:", inngestError)
@@ -236,9 +229,7 @@ export async function updateFullSubscription(formData) {
     return { error: errorHandler(error).message }
   }
 
-  if (isSuccess) {
-    redirect(`/dashboard/${id}`)
-  }
+  if (isSuccess) redirect(`/dashboard/${id}`)
 }
 
 export async function deleteSubscription(id) {
@@ -249,11 +240,9 @@ export async function deleteSubscription(id) {
     const sub = await Subscription.getByUserAndId(user.userId, id)
     if (!sub) throw new Error("Subscription not found or access denied")
 
-    // Batalkan reminder di Inngest sebelum hapus data
-    await inngest.send({
-      name: "app/subscription.reminder.cancel",
-      data: { subId: id }
-    })
+    try {
+      await inngest.send({ name: "app/subscription.reminder.cancel", data: { subId: id } })
+    } catch (e) {}
 
     await Member.deleteBySubscriptionId(id, user.userId)
     await Subscription.delete(id, user.userId)
@@ -265,10 +254,9 @@ export async function deleteSubscription(id) {
   redirect("/dashboard")
 }
 
-// Buat subscription dari GroupRequest yang sudah full
 export async function setupSubscriptionFromGroup(formData) {
   let isSuccess = false
-  let newSubId = "" // ✅ Tambah variable untuk tracking
+  let newSubId = ""
 
   try {
     const user = await getCurrentUser()
@@ -290,7 +278,6 @@ export async function setupSubscriptionFromGroup(formData) {
     const masterSvc = await MasterData.findByName(serviceName)
     const logoUrl = masterSvc?.logo || ""
 
-    // Buat subscription bertipe Family
     const subResult = await Subscription.create({
       serviceName,
       logo: logoUrl,
@@ -304,13 +291,12 @@ export async function setupSubscriptionFromGroup(formData) {
       userId: user.userId,
     })
 
-    newSubId = subResult.insertedId.toString() // ✅ Simpan ID
+    newSubId = subResult.insertedId.toString()
 
     const { getDb } = await import("@/server/config/mongodb")
     const { ObjectId } = await import("mongodb")
     const db = await getDb()
 
-    // Update data member + link ke subscription baru
     for (const m of membersData) {
       await db.collection("members").updateOne(
         { _id: new ObjectId(m.memberId) },
@@ -325,25 +311,17 @@ export async function setupSubscriptionFromGroup(formData) {
       )
     }
 
-    // Update GroupRequest: simpan subscriptionId + tutup group
     await db.collection("groupRequests").updateOne(
       { _id: new ObjectId(groupRequestId) },
       { $set: { subscriptionId: newSubId, status: "closed" } }
     )
 
-    // ✅ KIRIM WELCOME EMAIL KE OWNER + SEMUA MEMBERS
-    await inngest.send({
-      name: "app/subscription.created",
-      data: { subId: newSubId }
-    })
-
-    // ✅ SCHEDULE REMINDER JIKA AKTIF
-    if (isReminderActive) {
-      await inngest.send({
-        name: "app/subscription.reminder",
-        data: { subId: newSubId, reminderDate },
-      })
-    }
+    try {
+      await inngest.send({ name: "app/subscription.created", data: { subId: newSubId } })
+      if (isReminderActive) {
+        await inngest.send({ name: "app/subscription.reminder", data: { subId: newSubId, reminderDate } })
+      }
+    } catch (e) {}
 
     revalidatePath("/dashboard")
     revalidatePath(`/dashboard/group-requests/${groupRequestId}`)

@@ -194,34 +194,39 @@ export default function ExploreClient({ groupRequests, myRequests, currentUserId
       <div className="max-w-7xl mx-auto">
 
         {/* --- Header --- */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 px-4 gap-8">
-          <div className="space-y-4">
-            <Link 
-              href="/dashboard" 
-              className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-widest"
-            >
-              <FiArrowLeft strokeWidth={3} /> Dashboard
-            </Link>
-            <h1 className="text-4xl font-black tracking-tighter uppercase">Explore <span className="text-slate-400">Hub</span></h1>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/dashboard/group-requests" 
-              className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-900 text-slate-900 rounded text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-50 transition-all shadow-sm"
-            >
-              <FiLayers strokeWidth={3} size={16} /> My Groups
-            </Link>
-            
-            <Link
-              href="/dashboard/group-requests/create"
-              className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
-            >
-              <FiPlus strokeWidth={3} size={16} />
-              New Group
-            </Link>
-          </div>
-        </header>
+<header className="mb-8 px-4 space-y-6">
+  {/* Back Link - Terpisah */}
+  <Link 
+    href="/dashboard" 
+    className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-widest"
+  >
+    <FiArrowLeft strokeWidth={3} /> Dashboard
+  </Link>
+  
+  {/* Title & Actions - Sejajar */}
+  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <h1 className="text-4xl font-black tracking-tighter uppercase">
+      Subscription <span className="text-slate-400">Marketplace</span>
+    </h1>
+    
+    <div className="flex items-center gap-4">
+      <Link 
+        href="/dashboard/group-requests" 
+        className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-900 text-slate-900 rounded text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-50 transition-all shadow-sm"
+      >
+        <FiLayers strokeWidth={3} size={16} /> My Groups
+      </Link>
+      
+      <Link
+        href="/dashboard/group-requests/create"
+        className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+      >
+        <FiPlus strokeWidth={3} size={16} />
+        New Group
+      </Link>
+    </div>
+  </div>
+</header>
 
         {/* --- Search Bar --- */}
         <div className="bg-white border border-slate-200 p-2 rounded-lg mb-12 shadow-sm flex items-center">

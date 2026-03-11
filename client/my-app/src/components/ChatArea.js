@@ -17,6 +17,7 @@ export default function ChatArea({
   onAddGroupMember, // Handler for adding members to a group
   onRemoveGroupMember, // Handler for removing members from a group
   onDeleteGroup, // Handler for deleting a group
+  onBack,
 }) {
   const messagesEndRef = useRef(null);
 
@@ -58,13 +59,35 @@ export default function ChatArea({
   }
 
   return (
-    <div className="flex-1 bg-white flex flex-col border-l border-slate-200 overflow-hidden">
-      {/* Chat Header */}
-      <div className="border-b border-slate-200 p-4.5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* User/Group Avatar */}
+    <div className="flex-1 bg-white flex flex-col border-slate-200 overflow-hidden">
+      {/* Chat Header - Fixed height sama dengan MessageList */}
+<div className="border-b border-slate-200 px-4 h-[64px] md:h-[80px] flex items-center justify-between">
+  <div className="flex items-center gap-3">
+          {/* Tombol Back - hanya terlihat di mobile */}
+          <button
+            onClick={onBack}
+            className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 transition-colors"
+            aria-label="Back to conversations"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-slate-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+
+          {/* User/Group Avatar - Kecilkan di mobile */}
           <div className="relative">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-200">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-slate-200">
               {activeConversation.userAvatar ? (
                 <img
                   src={activeConversation.userAvatar}
@@ -72,29 +95,29 @@ export default function ChatArea({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-sky-400 to-blue-500 text-white font-black text-lg">
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-sky-400 to-blue-500 text-white font-black text-base md:text-lg">
                   {activeConversation.userName?.charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
-            {/* Online Status (hide untuk group) */}
+            {/* Online Status */}
             {activeConversation.status === "online" &&
               activeConversation.type !== "group" && (
-                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white"></div>
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3.5 md:h-3.5 bg-emerald-400 rounded-full border-2 border-white"></div>
               )}
           </div>
 
-          {/* User/Group Info */}
+          {/* User/Group Info - Sesuaikan font size */}
           <div>
-            <h2 className="text-lg font-black text-slate-900">
+            <h2 className="text-base md:text-lg font-black text-slate-900">
               {activeConversation.userName || "Unknown User"}
             </h2>
             {activeConversation.type === "group" ? (
-              <p className="text-xs text-slate-500 font-bold">
+              <p className="text-[10px] md:text-xs text-slate-500 font-bold">
                 {activeConversation.participants?.length || 0} members
               </p>
             ) : (
-              <p className="text-xs text-emerald-500 font-bold flex items-center gap-1">
+              <p className="text-[10px] md:text-xs text-emerald-500 font-bold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
                 {activeConversation.status === "online" ? "Online" : "Offline"}
               </p>
@@ -103,8 +126,8 @@ export default function ChatArea({
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-blue-50/20 via-indigo-50/20 to-purple-50/20">
+      {/* Messages Area - Kurangi padding, responsive */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 md:px-6 mt-2 md:py-5 bg-gradient-to-br from-blue-50/20 via-indigo-50/20 to-purple-50/20">
         {messages && messages.length > 0 ? (
           <div className="max-w-3xl mx-auto">
             {messages.map((message) => {

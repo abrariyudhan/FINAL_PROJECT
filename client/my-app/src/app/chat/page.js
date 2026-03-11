@@ -420,13 +420,12 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="fixed top-[73px] md:px-12 md:py-4 left-0 right-0 bottom-0 flex bg-[#FBFBFB]">
-
-      {/* Left Sidebar with navigation */}
-      {/* <Sidebar /> */}
-
-      {/* Middle section with conversation list */}
-      <div className="flex-shrink-0 w-80 border-r border-gray-200 flex flex-col overflow-hidden">
+  <div className="fixed top-[73px] left-0 right-0 pt-4 bottom-16 flex bg-[#FBFBFB]">
+    {/* Conversation List */}
+    <div className={`
+      flex-shrink-0 flex flex-col overflow-hidden
+      ${activeConversationId ? 'hidden md:flex md:w-100' : 'w-full md:w-80'}
+    `}>
       <MessageList
         conversations={conversations}
         groupMembers={groupMembers}
@@ -434,10 +433,16 @@ export default function ChatPage() {
         onSelectConversation={handleSelectConversation}
         onStartConversation={handleStartConversation}
       />
-      </div>
+    </div>
 
-      {/* Right section with active chat */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+    {/* Border Vertical Divider - Full Height */}
+    <div className="hidden md:block w-px bg-gray-200 flex-shrink-0"></div>
+
+    {/* Chat Area */}
+    <div className={`
+      flex-1 flex flex-col overflow-hidden
+      ${activeConversationId ? 'flex' : 'hidden md:flex'}
+    `}>
       <ChatArea
         activeConversation={activeConversation}
         messages={messages}
@@ -450,8 +455,9 @@ export default function ChatPage() {
         onAddGroupMember={handleAddGroupMember}
         onRemoveGroupMember={handleRemoveGroupMember}
         onDeleteGroup={handleDeleteGroup}
+        onBack={() => setActiveConversationId(null)}
       />
-      </div>
     </div>
-  );
+  </div>
+);
 }

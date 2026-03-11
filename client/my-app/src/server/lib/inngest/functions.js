@@ -86,9 +86,13 @@ export const sendSubscriptionReminder = inngest.createFunction(
 ${isFamily ? `💳 <b>Your Share:</b> Rp ${pricePerPerson.toLocaleString('id-ID')} (${totalPeople} members)` : ''}
 📅 <b>Billing Date:</b> ${new Date(sub.billingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
 
-${recipient.isOwner ? '💡 Jangan lupa kumpulkan iuran dari member!' : '⚠️ Siapkan iuran Anda sebelum tanggal billing!'}
+${recipient.isOwner 
+  ? (isFamily 
+      ? '💡 Jangan lupa kumpulkan iuran dari member!' 
+      : '⚠️ Siapkan dana Anda sebelum tanggal billing!')
+  : '⚠️ Siapkan iuran Anda sebelum tanggal billing!'}
 
-🔗 <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/${sub._id}">Lihat Detail</a>`
+🔗 <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://subtrack8.kurleb.web.id'}/dashboard/${sub._id}">Lihat Detail</a>`
 
           await sendTelegram(recipient.telegramChatId, teleText)
         }
@@ -159,7 +163,7 @@ ${recipient.isOwner ? '💡 Jangan lupa kumpulkan iuran dari member!' : '⚠️ 
           <div style="background: linear-gradient(135deg, #fef3f2 0%, #fee2e2 100%); padding: 24px; border-radius: 16px; text-align: center; border: 2px solid #fecaca; margin-bottom: 32px;">
             <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 18px; font-weight: 700;">📊 View Subscription Details</h3>
             <p style="margin: 0 0 24px 0; color: #991b1b; font-size: 14px; line-height: 1.5;">Check full details, payment history, and manage your subscription.</p>
-            <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/${subId}" 
+            <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://subtrack8.kurleb.web.id'}/dashboard/${subId}" 
                style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);">
               🚀 Open Dashboard
             </a>
@@ -398,7 +402,7 @@ export const sendWelcomeInvitation = inngest.createFunction(
             <div style="background: linear-gradient(135deg, #fef3f2 0%, #fee2e2 100%); padding: 24px; border-radius: 16px; text-align: center; border: 2px solid #fecaca; margin-bottom: 32px;">
               <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 18px; font-weight: 700;">📊 View Full Details</h3>
               <p style="margin: 0 0 24px 0; color: #991b1b; font-size: 14px; line-height: 1.5;">Check payment history, billing schedule, and manage your contribution.</p>
-              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://subtrack8.com'}/dashboard/${subId}" 
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://subtrack8.kurleb.web.id'}/dashboard/${subId}" 
                  style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);">
                 🚀 Open Dashboard
               </a>
@@ -540,7 +544,7 @@ export const sendWelcomeInvitation = inngest.createFunction(
         © ${new Date().getFullYear()} SubTrack8. All rights reserved.
       </p>
       <div style="margin-top: 20px;">
-        <a href="https://subtrack8.com" style="color: #0ea5e9; text-decoration: none; font-size: 13px; margin: 0 12px;">Visit Website</a>
+        <a href="https://subtrack8.kurleb.web.id" style="color: #0ea5e9; text-decoration: none; font-size: 13px; margin: 0 12px;">Visit Website</a>
         <span style="color: #cbd5e1;">•</span>
         <a href="#" style="color: #0ea5e9; text-decoration: none; font-size: 13px; margin: 0 12px;">Help Center</a>
         <span style="color: #cbd5e1;">•</span>

@@ -2,74 +2,137 @@
 import { useState, useEffect, useRef } from "react";
 import { createFullSubscription } from "@/actions/subscription";
 import { useRouter } from "next/navigation";
+import { useSession, signIn } from "next-auth/react"
 import Link from "next/link";
-import { FiArrowLeft, FiTarget, FiCalendar, FiUsers, FiCreditCard, FiPlus, FiX, FiCheck } from "react-icons/fi";
+import { FiArrowLeft, FiTarget, FiCalendar, FiUsers, FiCreditCard, FiPlus, FiX, FiCheck, FiMail, FiSearch, FiLoader } from "react-icons/fi";
 
 export default function AddSubscriptionForm({ masterServices }) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false)
-  const [isManualInput, setIsManualInput] = useState(false)
-  
-  const [selectedServiceName, setSelectedServiceName] = useState("")
-  const [category, setCategory] = useState("Entertainment")
-  const [currentLogo, setCurrentLogo] = useState("")
-  const [selectedServiceId, setSelectedServiceId] = useState("") // ✅ Tambah serviceId
-  
-  const [subType, setSubType] = useState("Individual")
-  const [members, setMembers] = useState([])
-  const [price, setPrice] = useState(0)
-  const [billingDate, setBillingDate] = useState("")
-  const [cycle, setCycle] = useState(1)
+  const { data: session } = useSession()
+  const [isOpen, setIsOpen] = useState(false);
+  const [isManualInput, setIsManualInput] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const dropdownRef = useRef(null)
-  const today = new Date().toISOString().split('T')[0]
+  // Gmail Scanner States
+  const [isScanning, setIsScanning] = useState(false);
+  const [detectedSubs, setDetectedSubs] = useState([]);
+  const [showScanner, setShowScanner] = useState(false);
+
+  const [selectedServiceName, setSelectedServiceName] = useState("");
+  const [category, setCategory] = useState("Entertainment");
+  const [currentLogo, setCurrentLogo] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
+
+  const [subType, setSubType] = useState("Individual");
+  const [members, setMembers] = useState([]);
+  const [price, setPrice] = useState(0);
+  const [billingDate, setBillingDate] = useState("");
+  const [cycle, setCycle] = useState(1);
+
+  const dropdownRef = useRef(null);
+  const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // --- Gmail Logic ---
+  const handleScanGmail = async () => {
+    // Cek apakah user punya akses ke Gmail
+    if (!session?.accessToken) {
+      // Jika tidak punya token, paksa login ulang ke Google untuk minta izin Gmail
+      signIn("google");
+      return;
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+
+    setIsScanning(true);
+    setShowScanner(true);
+    try {
+      const res = await fetch("/api/scan-gmail");
+      const result = await res.json();
+      if (result.data) {
+        setDetectedSubs(result.data);
+      }
+    } catch (err) {
+      console.error("Gmail Scan Error:", err);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const applyDetectedSub = (sub) => {
+    // 1. Set Nama Service
+    setSelectedServiceName(sub.vendor.toUpperCase());
+    setPrice(sub.pricePaid || 0);
+    setBillingDate(sub.billingDate);
+    setCycle(sub.billingCycle || 1);
+    setSubType(sub.type || "Individual");
+
+    // 2. Cari apakah vendor ini ada di masterServices kita untuk set logo & ID
+    const master = masterServices.find(s =>
+      s.serviceName.toLowerCase().includes(sub.vendor.toLowerCase()) ||
+      sub.vendor.toLowerCase().includes(s.serviceName.toLowerCase())
+    );
+
+    if (master) {
+      setIsManualInput(false);
+      setCurrentLogo(master.logo);
+      setSelectedServiceId(master._id);
+      setCategory(master.category || "Entertainment");
+    } else {
+      setIsManualInput(true);
+      setCurrentLogo("");
+      setSelectedServiceId("");
+      setCategory("Other");
+    }
+
+    // 3. Set Tanggal Billing dari Email
+    setBillingDate(sub.billingDate);
+
+    // Tutup scanner setelah pilih
+    setShowScanner(false);
+  };
 
   const handleSelectService = (svc) => {
-    setIsManualInput(false)
-    setSelectedServiceName(svc.serviceName)
-    setCategory(svc.category || "Entertainment")
-    setCurrentLogo(svc.logo || "")
-    setSelectedServiceId(svc._id) // ✅ Simpan serviceId
-    setIsOpen(false)
-  }
+    setIsManualInput(false);
+    setSelectedServiceName(svc.serviceName);
+    setCategory(svc.category || "Entertainment");
+    setCurrentLogo(svc.logo || "");
+    setSelectedServiceId(svc._id);
+    setIsOpen(false);
+  };
 
   const handleManualOption = () => {
-    setIsManualInput(true)
-    setSelectedServiceName("")
-    setCategory("Other")
-    setCurrentLogo("")
-    setSelectedServiceId("") // ✅ Reset serviceId
-    setIsOpen(false)
-  }
+    setIsManualInput(true);
+    setSelectedServiceName("");
+    setCategory("Other");
+    setCurrentLogo("");
+    setSelectedServiceId("");
+    setIsOpen(false);
+  };
 
-  const addMemberField = () => setMembers([...members, { id: Date.now() }])
-  const removeMemberField = (id) => setMembers(members.filter((m) => m.id !== id))
-  
-  const totalOrang = 1 + members.length
-  const pricePerPerson = price > 0 ? Math.round(price / totalOrang) : 0
-  const monthlyEquivalent = Math.round(pricePerPerson / cycle)
+  const addMemberField = () => setMembers([...members, { id: Date.now() }]);
+  const removeMemberField = (id) => setMembers(members.filter((m) => m.id !== id));
 
-  const inputStyles = "w-full p-4 bg-white border border-slate-200 rounded-md outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-sm font-bold text-slate-900 transition-all placeholder:text-slate-300 shadow-sm"
-  const labelStyles = "block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1"
-  const cardStyles = "bg-white p-8 rounded-lg border border-slate-200 shadow-sm"
+  const totalOrang = 1 + members.length;
+  const pricePerPerson = price > 0 ? Math.round(price / totalOrang) : 0;
+  const monthlyEquivalent = Math.round(pricePerPerson / cycle);
 
-  // ✅ Handle form submit manually
+  const inputStyles = "w-full p-4 bg-white border border-slate-200 rounded-md outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 text-sm font-bold text-slate-900 transition-all placeholder:text-slate-300 shadow-sm";
+  const labelStyles = "block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1";
+  const cardStyles = "bg-white p-8 rounded-lg border border-slate-200 shadow-sm";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setIsSaving(true);
+
     const formData = new FormData(e.target);
-    
-    // ✅ Tambahkan data dari state yang tidak ada di form
     formData.set("serviceName", selectedServiceName);
     formData.set("category", category);
     formData.set("logo", currentLogo);
@@ -77,16 +140,11 @@ export default function AddSubscriptionForm({ masterServices }) {
       formData.set("serviceId", selectedServiceId);
     }
 
-    console.log("=== FORM SUBMIT DEBUG ===");
-    console.log("ServiceName:", formData.get("serviceName"));
-    console.log("Category:", formData.get("category"));
-    console.log("Logo:", formData.get("logo"));
-    console.log("ServiceId:", formData.get("serviceId"));
-
     const result = await createFullSubscription(formData);
-    
+
     if (result?.error) {
       alert(result.error);
+      setIsSaving(false);
     } else {
       router.push("/dashboard");
       router.refresh();
@@ -96,24 +154,75 @@ export default function AddSubscriptionForm({ masterServices }) {
   return (
     <div className="min-h-screen bg-[#FBFBFB] p-6 md:px-12 md:py-12 font-sans text-slate-900 antialiased">
       <div className="max-w-3xl mx-auto">
-        
+
         {/* --- Header --- */}
         <header className="mb-12 space-y-8">
           <Link href="/dashboard" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-colors uppercase text-[10px] font-black tracking-[0.2em]">
             <FiArrowLeft strokeWidth={3} /> Cancel and Exit
           </Link>
-          
-          <div className="border-b border-slate-200 pb-10">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">
-              Add <span className="text-slate-400">Subscription</span>
-            </h1>
-            <p className="mt-4 text-xs text-slate-400 font-medium tracking-wide uppercase">Setup a new recurring service</p>
+
+          <div className="border-b border-slate-200 pb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">
+                Add <span className="text-slate-400">Subscription</span>
+              </h1>
+              <p className="mt-4 text-xs text-slate-400 font-medium tracking-wide uppercase">Setup a new recurring service</p>
+            </div>
+
+            {/* GMAIL SCAN BUTTON */}
+            <button
+              type="button"
+              onClick={handleScanGmail}
+              disabled={isScanning}
+              className="flex items-center gap-3 px-6 py-4 bg-white border border-slate-200 text-slate-900 rounded-md text-[10px] font-black uppercase tracking-[0.2em] hover:border-slate-900 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isScanning ? <FiLoader className="animate-spin" size={14} strokeWidth={3} /> : <FiMail size={14} strokeWidth={3} />}
+              {isScanning ? "Scanning..." : "Gmail Scan"}
+            </button>
           </div>
         </header>
 
-        {/* ✅ Change: action -> onSubmit */}
+        {/* --- Gmail Scanner Result Box --- */}
+        {showScanner && (
+          <div className="mb-12 bg-white border-2 border-blue-500 rounded-xl p-6 shadow-2xl animate-in fade-in slide-in-from-top-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-blue-600">Detected from your Gmail</h3>
+              <button onClick={() => setShowScanner(false)} className="text-slate-400 hover:text-slate-900"><FiX size={20} /></button>
+            </div>
+
+            {detectedSubs.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {detectedSubs.map((sub) => (
+                  <div
+                    key={sub.id}
+                    onClick={() => applyDetectedSub(sub)}
+                    className="flex items-center gap-4 p-4 border border-slate-100 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all group"
+                  >
+                    <div className="w-10 h-10 bg-white border border-slate-100 rounded flex items-center justify-center font-black text-blue-500 text-xs shadow-sm">
+                      {sub.vendor[0]}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-black uppercase tracking-tight">{sub.vendor}</p>
+                      <p className="text-[10px] text-slate-400 font-medium">Billed on {sub.billingDate}</p>
+                    </div>
+                    <FiCheck className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-10 text-center">
+                {isScanning ? (
+                  <p className="text-xs font-bold text-slate-400 animate-pulse">Analyzing your receipts...</p>
+                ) : (
+                  <p className="text-xs font-bold text-slate-400">No recent subscriptions detected. Try manual input below.</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-8 pb-20">
-          
+
           {/* Section 1: Service Details */}
           <div className={cardStyles}>
             <div className="flex items-center gap-3 mb-8">
@@ -123,17 +232,16 @@ export default function AddSubscriptionForm({ masterServices }) {
 
             <div className="relative" ref={dropdownRef}>
               <label className={labelStyles}>Service Provider</label>
-              
+
               {isManualInput ? (
                 <div className="flex gap-2">
-                  {/* ✅ Tidak perlu name attribute karena pakai state */}
-                  <input 
-                    value={selectedServiceName} 
-                    onChange={(e) => setSelectedServiceName(e.target.value)} 
-                    placeholder="ENTER SERVICE NAME..." 
-                    className={inputStyles} 
-                    required 
-                    autoFocus 
+                  <input
+                    value={selectedServiceName}
+                    onChange={(e) => setSelectedServiceName(e.target.value)}
+                    placeholder="ENTER SERVICE NAME..."
+                    className={inputStyles}
+                    required
+                    autoFocus
                   />
                   <button type="button" onClick={() => setIsManualInput(false)} className="px-4 bg-slate-100 hover:bg-slate-200 rounded-md text-slate-600 transition-all">
                     ↺
@@ -170,15 +278,14 @@ export default function AddSubscriptionForm({ masterServices }) {
                 </div>
               )}
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
               <div>
                 <label className={labelStyles}>Category</label>
-                {/* ✅ Tidak perlu name karena pakai state */}
-                <select 
-                  value={category} 
-                  onChange={(e) => setCategory(e.target.value)} 
-                  className={inputStyles} 
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className={inputStyles}
                   disabled={!isManualInput}
                 >
                   <option value="Entertainment">Entertainment</option>
@@ -200,7 +307,7 @@ export default function AddSubscriptionForm({ masterServices }) {
             </div>
           </div>
 
-          {/* Section 2: Financials (Modern Dark Card) */}
+          {/* Section 2: Financials */}
           <div className="bg-slate-900 p-8 rounded-lg text-white shadow-xl space-y-8">
             <div className="flex items-center gap-3">
               <FiCreditCard className="text-blue-500" size={16} />
@@ -211,7 +318,7 @@ export default function AddSubscriptionForm({ masterServices }) {
               <div>
                 <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Total Price (IDR)</label>
                 <div className="flex items-baseline gap-2 border-b border-slate-800 pb-2">
-                  <input name="pricePaid" type="number" placeholder="0" onChange={(e) => setPrice(Number(e.target.value))} className="bg-transparent text-4xl font-black text-white outline-none w-full tracking-tighter" required />
+                  <input name="pricePaid" type="number" placeholder="0" value={price || ""} onChange={(e) => setPrice(Number(e.target.value))} className="bg-transparent text-4xl font-black text-white outline-none w-full tracking-tighter" required />
                 </div>
               </div>
 
@@ -237,7 +344,7 @@ export default function AddSubscriptionForm({ masterServices }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <label className={labelStyles}>Next Billing Date</label>
-                <input name="billingDate" type="date" min={today} onChange={(e) => setBillingDate(e.target.value)} className={inputStyles} required />
+                <input name="billingDate" type="date" min={today} value={billingDate} onChange={(e) => setBillingDate(e.target.value)} className={inputStyles} required />
               </div>
               <div>
                 <label className={labelStyles}>Reminder Alert</label>
@@ -255,7 +362,7 @@ export default function AddSubscriptionForm({ masterServices }) {
               </div>
               <div className="flex gap-2 bg-slate-100 p-1 rounded-md">
                 {["Individual", "Family"].map((t) => (
-                  <button key={t} type="button" onClick={() => { setSubType(t); if(t === "Individual") setMembers([]); }}
+                  <button key={t} type="button" onClick={() => { setSubType(t); if (t === "Individual") setMembers([]); }}
                     className={`px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all ${subType === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}>
                     {t}
                   </button>
@@ -294,13 +401,26 @@ export default function AddSubscriptionForm({ masterServices }) {
               </label>
             </div>
 
-            <button type="submit" className="w-full bg-slate-900 text-white py-6 rounded-md font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-xl">
-              Save Subscription
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="w-full bg-slate-900 text-white py-6 rounded-md font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-xl disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            >
+              {isSaving ? (
+                <>
+                  <FiLoader className="animate-spin" size={16} strokeWidth={3} />
+                  Saving...
+                </>
+              ) : (
+                'Save Subscription'
+              )}
             </button>
           </div>
 
         </form>
+
       </div>
+
     </div>
-  )
+  );
 }
