@@ -1,22 +1,62 @@
-# FINAL_PROJECT
+# Taskflow 📋🚀
 
-## SETIAP MAU MEMULAI CODING 
+Taskflow adalah platform manajemen tugas berbasis Kanban (Trello-clone) yang dirancang untuk kolaborasi tim secara *real-time*. Platform ini dilengkapi dengan fitur otomatisasi cerdas berbasis kecerdasan buatan (AI) untuk membantu meningkatkan produktivitas dan alur kerja tim.
 
-git checkout -b task/"Nama kalian"
+---
 
-git pull origin dev
+## 🌟 Fitur Utama
 
-DAN REPORT DI GRUP DISCORD
+*   **Papan Kanban Interaktif:** Manajemen tugas yang intuitif menggunakan sistem *drag-and-drop*.
+*   **Kolaborasi Real-Time:** Sinkronisasi data instan antar pengguna menggunakan **Socket.io** tanpa perlu memuat ulang halaman.
+*   **Automated Sub-task Generation (AI Feature):** Integrasi dengan **Google Gemini AI** yang mampu memecah tugas besar menjadi beberapa sub-tugas secara otomatis berdasarkan deskripsi yang diberikan.
+*   **Manajemen Autentikasi & Otorisasi:** Pengamanan hak akses pengguna untuk memastikan privasi dan keamanan data setiap proyek.
 
+---
 
-## JIKA SUDAH SELESAI
-git add . 
+## 🛠️ Tech Stack
 
-git commit -m "Nama kalian - Deskripsi singkat perubahan yang dilakukan"
+### Backend (Core Architecture)
+*   **Runtime Environment:** Node.js
+*   **Framework:** Express.js
+*   **Database:** Supabase
+*   **ORM:** Sequelize
+*   **Real-Time Communication:** Socket.io
+*   **AI Integration:** Google Gen-AI (Gemini API)
 
-git push origin task/"Nama kalian"
+### Frontend
+*   **Library:** React.js
 
-## UNTUK DI GITHUBNYA
-Buat Pull Request dari branch task/"Nama kalian" ke branch dev
+---
 
-Minta review ke semuanya.
+## 🚀 Panduan Instalasi (Backend)
+
+Ikuti langkah-langkah berikut untuk menjalankan server Taskflow di lingkungan lokal Anda:
+
+### 1. Klon Repositori
+```bash
+git clone [https://github.com/username/taskflow-backend.git](https://github.com/username/taskflow-backend.git)
+cd taskflow-backend
+
+## 🚀 Panduan Instalasi (Backend)
+
+Ikuti blok perintah di bawah ini untuk menjalankan server Taskflow di lingkungan lokal Anda secara cepat:
+
+```bash
+# 1. Klon Repositori & Masuk ke Direktori
+git clone [https://github.com/yourusername/taskflow-backend.git](https://github.com/yourusername/taskflow-backend.git) && cd taskflow-backend
+
+# 2. Instal Seluruh Dependensi
+npm install
+
+# 3. Konfigurasi Environment Variables
+# Jalankan perintah ini untuk membuat file .env otomatis, lalu sesuaikan isinya nanti
+echo "PORT=3000
+DATABASE_URL=postgres://postgres:password@localhost:5432/taskflow_db
+JWT_SECRET=your_jwt_secret_key
+GEMINI_API_KEY=your_google_gemini_api_key" > .env
+
+# 4. Jalankan Migrasi Database
+npx sequelize-cli db:migrate
+
+# 5. Jalankan Server dalam Mode Pengembangan
+node --watch 
