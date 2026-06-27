@@ -1,62 +1,57 @@
-# Taskflow 📋🚀
+# SubsTrack8 💳🔔
 
-Taskflow adalah platform manajemen tugas berbasis Kanban (Trello-clone) yang dirancang untuk kolaborasi tim secara *real-time*. Platform ini dilengkapi dengan fitur otomatisasi cerdas berbasis kecerdasan buatan (AI) untuk membantu meningkatkan produktivitas dan alur kerja tim.
+SubsTrack8 adalah platform manajemen dan pelacakan biaya langganan cerdas yang dirancang untuk membantu pengguna memantau pengeluaran langganan mereka. Aplikasi ini dilengkapi dengan pengingat otomatis berbasis *event-driven workflow* serta fitur komunikasi langsung.
 
 ---
 
 ## 🌟 Fitur Utama
 
-*   **Papan Kanban Interaktif:** Manajemen tugas yang intuitif menggunakan sistem *drag-and-drop*.
-*   **Kolaborasi Real-Time:** Sinkronisasi data instan antar pengguna menggunakan **Socket.io** tanpa perlu memuat ulang halaman.
-*   **Automated Sub-task Generation (AI Feature):** Integrasi dengan **Google Gemini AI** yang mampu memecah tugas besar menjadi beberapa sub-tugas secara otomatis berdasarkan deskripsi yang diberikan.
-*   **Manajemen Autentikasi & Otorisasi:** Pengamanan hak akses pengguna untuk memastikan privasi dan keamanan data setiap proyek.
+*   **Pelacakan Langganan:** Mencatat dan memantau siklus tagihan berbagai layanan langganan.
+*   **Pengingat Otomatis (Automated Reminders):** Mengirimkan notifikasi pengingat otomatis sebelum tanggal tagihan tiba melalui email dan bot Telegram.
+*   **Alur Kerja Event-Driven:** Memanfaatkan arsitektur berbasis *event* untuk memproses logika penjadwalan pengingat secara andal.
+*   **Real-Time Chat:** Komunikasi interaktif secara *real-time* langsung di dalam aplikasi.
+*   **Otentikasi Aman:** Pendaftaran dan masuk akun yang praktis menggunakan Google OAuth 2.0.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Backend (Core Architecture)
-*   **Runtime Environment:** Node.js
-*   **Framework:** Express.js
-*   **Database:** Supabase
-*   **ORM:** Sequelize
-*   **Real-Time Communication:** Socket.io
-*   **AI Integration:** Google Gen-AI (Gemini API)
-
-### Frontend
-*   **Library:** React.js
+*   **Framework:** Next.js
+*   **Database:** MongoDB
+*   **Real-Time Communication:** Socket.IO
+*   **Workflow Engine:** Inngest (Event-Driven Workflows)
+*   **Notification APIs:** Resend Email API & Telegram Bot API
+*   **Media Management:** Cloudinary
+*   **Authentication:** Third-party API Google Auth
 
 ---
 
-## 🚀 Panduan Instalasi (Backend)
+## 🚀 Panduan Instalasi & Menjalankan Aplikasi
 
-Ikuti langkah-langkah berikut untuk menjalankan server Taskflow di lingkungan lokal Anda:
-
-### 1. Klon Repositori
-```bash
-git clone [https://github.com/username/taskflow-backend.git](https://github.com/username/taskflow-backend.git)
-cd taskflow-backend
-
-## 🚀 Panduan Instalasi (Backend)
-
-Ikuti blok perintah di bawah ini untuk menjalankan server Taskflow di lingkungan lokal Anda secara cepat:
+Ikuti blok perintah di bawah ini di terminal Anda untuk menjalankan proyek SubsTrack8 di lingkungan lokal secara cepat:
 
 ```bash
-# 1. Klon Repositori & Masuk ke Direktori
-git clone [https://github.com/yourusername/taskflow-backend.git](https://github.com/yourusername/taskflow-backend.git) && cd taskflow-backend
+# 1. Klon repositori dan masuk ke direktori utama proyek
+git clone [https://github.com/yourusername/subtrack8.git](https://github.com/yourusername/subtrack8.git) && cd subtrack8
 
-# 2. Instal Seluruh Dependensi
+# 2. Instal seluruh dependensi yang dibutuhkan
 npm install
 
-# 3. Konfigurasi Environment Variables
-# Jalankan perintah ini untuk membuat file .env otomatis, lalu sesuaikan isinya nanti
+# 3. Konfigurasi Environment Variables (Menyalin contoh konfigurasi otomatis)
+# Jalankan perintah ini untuk membuat file .env otomatis, kemudian lengkapi nilainya nanti
 echo "PORT=3000
-DATABASE_URL=postgres://postgres:password@localhost:5432/taskflow_db
-JWT_SECRET=your_jwt_secret_key
-GEMINI_API_KEY=your_google_gemini_api_key" > .env
+MONGODB_URI=your_mongodb_connection_string
+NEXTAUTH_SECRET=your_nextauth_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+INNGEST_EVENT_KEY=your_inngest_event_key
+INNGEST_SIGNING_KEY=your_inngest_signing_key
+RESEND_API_KEY=your_resend_api_key
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloudinary_name" > .env
 
-# 4. Jalankan Migrasi Database
-npx sequelize-cli db:migrate
+# 4. Jalankan perkakas pendukung alur kerja jika dibutuhkan (Inngest Dev Server)
+# npx inngest-cli dev (jalankan di terminal terpisah jika menggunakan lingkungan lokal)
 
-# 5. Jalankan Server dalam Mode Pengembangan
-node --watch 
+# 5. Jalankan server aplikasi dalam mode pengembangan (Development)
+npm run dev
